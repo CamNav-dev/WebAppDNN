@@ -29,6 +29,7 @@ const handleSubmit = async (e) => {
       setError(true);
       return;
     }
+    navigate('/sign-in');
   } catch (error) {
     setLoading(false);
     setError(true);
