@@ -12,16 +12,16 @@ function Header() {
           <img src={logo} alt="FraudShieldAI" className="h-8 sm:h-10 md:h-12 lg:h-14" />
           </Link>
             <ul className='flex gap-8 font-bold'>
-                <Link to='/'>
+                <Link to='/' className="hover:text-blue-600 transition">
                 <li>Inicio</li>
                 </Link>
-                <Link to='/about'>
+                <Link to='/about' className="hover:text-blue-600 transition">
                 <li>Nosotras</li>
                 </Link>
-                <Link to='/'>
+                <Link to='/' className="hover:text-blue-600 transition">
                 <li>Contáctanos</li>
                 </Link>
-                <Link to='/sign-in'>
+                <Link to='/sign-in' className="hover:text-blue-600 transition">
                 {currentUser ? <li>{currentUser.name}</li> : ''}
                 <li>Mi cuenta</li>
                 </Link>
@@ -32,3 +32,7 @@ function Header() {
 }
 
 export default Header
+
+
+
+
