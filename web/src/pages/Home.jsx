@@ -3,7 +3,7 @@ import React from "react";
 export default function Home() {
   return (
     <div className=" flex flex-col ">
-      <section className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center py-32 h-screen">
+      <section className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center py-48 h-screen">
         <div className="text-center max-w-4xl px-4">
           <h1 className="text-4xl md:text-5xl font-bold mt-8 mb-8">
           La solución inteligente para un futuro financiero seguro
@@ -64,9 +64,7 @@ export default function Home() {
               tracking.
             </p>
             <p className="text-gray-600">
-              We don't offer this as part of our software but that statement is
-              inarguably true. Accurate inventory tracking would help you for
-              sure.
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Optio, itaque porro sed repudiandae dolore aliquid aperiam illum modi incidunt omnis officia magni similique quas excepturi vel sunt nemo temporibus explicabo!
             </p>
           </div>
 
@@ -84,9 +82,7 @@ export default function Home() {
               one place.
             </p>
             <p className="text-gray-600">
-              This also isn't actually a feature, it's just some friendly
-              advice. We definitely recommend that you do this, you'll feel
-              really organized and professional.
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Tenetur sunt laboriosam dolores autem. Dolores, quod molestias! Modi pariatur quisquam eveniet, delectus excepturi repellat officia velit labore! Vel accusamus expedita incidunt?
             </p>
           </div>
         </div>

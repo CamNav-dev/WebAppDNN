@@ -34,7 +34,7 @@ export default function SignIn() {
         return;
       }
       dispatch(signInSuccess(data));
-      navigate('/');
+      navigate('/dashboard'); 
     } catch (error) {
       dispatch(signInFailure(error));
     }
@@ -91,7 +91,9 @@ export default function SignIn() {
               Registrar usuario
             </Link>
           </div>
-          <p className='text-red-700 mt-5'>{error ? error.message || 'Something went wrong when you tried to log in just now. Please try again later.' : ''}</p>
+          <p className='text-red-700 mt-5'>
+            {error ? error.message || 'Something went wrong when you tried to log in just now. Please try again later.' : ''}
+          </p>
         </form>
       </div>
     </div>

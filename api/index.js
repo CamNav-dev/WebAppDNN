@@ -1,8 +1,10 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import userRoutes from './routes/user.route.js';
 import authRoutes from './routes/auth.route.js';
+import fileRoutes from './routes/upload.route.js'; // Import the file routes
 
 dotenv.config();
 
@@ -15,25 +17,30 @@ mongoose.connect(mongoURI, {
 .catch(err => console.log(err));
 
 const app = express();
-app.use(express.json());
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
 
+// Enable CORS for all routes
+app.use(cors({
+  origin: 'http://localhost:5173', // Adjust the origin to match your frontend's URL
+  credentials: true,
+}));
+
+app.use(express.json());
+
+// Use the routes
 app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/files", fileRoutes); // Add the route for file uploads
 
+// Global error handling middleware
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Something went wrong';
   return res.status(statusCode).json({ 
     success: false,
     message,
-    statusCode, });
-})
-const uploadRoute = require('./routes/upload');
+    statusCode,
+  });
+});
 
-app.use('/api', uploadRoute);
-
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

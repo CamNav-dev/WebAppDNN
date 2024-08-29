@@ -1,45 +1,15 @@
-// backend/routes/upload.js
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
+import express from 'express';
+import multer from 'multer';
+import { uploadFile } from '../controllers/filecontroller.js';
+
 const router = express.Router();
 
-// Configure Multer storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-    }
-});
+// Configure multer to use memory storage instead of disk storage
+const storage = multer.memoryStorage();
 
-// File validation
-const fileFilter = (req, file, cb) => {
-    const filetypes = /xlsx|xls/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+const upload = multer({ storage });
 
-    if (mimetype && extname) {
-        return cb(null, true);
-    } else {
-        cb('Error: Excel Files Only!');
-    }
-};
+// POST /api/files/upload
+router.post('/upload', upload.single('file'), uploadFile);
 
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter
-}).single('file');
-
-// Upload route
-router.post('/upload', (req, res) => {
-    upload(req, res, (err) => {
-        if (err) {
-            return res.status(400).json({ message: err });
-        }
-        res.status(200).json({ message: 'File uploaded successfully', file: req.file });
-    });
-});
-
-module.exports = router;
+export default router;
