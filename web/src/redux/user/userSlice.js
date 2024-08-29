@@ -12,9 +12,13 @@ const userSlice = createSlice({
   reducers: {
     signInStart: (state) => {
       state.loading = true;
+      state.error = false;
     },
     signInSuccess: (state, action) => {
-      state.currentUser = action.payload;
+      state.currentUser = {
+        ...action.payload, // Ensure payload contains token
+        token: action.payload.token,
+      };
       state.loading = false;
       state.error = false;
     },

@@ -29,14 +29,19 @@ export default function SignIn() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if (data.success === false) {
-        dispatch(signInFailure(data));
-        return;
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to sign in');
       }
-      dispatch(signInSuccess(data));
+
+      dispatch(signInSuccess({
+        ...data.user, // User data from the response
+        token: data.token, // Token from the response
+      }));
+      // Store token in local storage
+      localStorage.setItem('token', data.token); 
       navigate('/dashboard'); 
     } catch (error) {
-      dispatch(signInFailure(error));
+      dispatch(signInFailure({ message: error.message }));
     }
   };
 

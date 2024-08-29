@@ -1,45 +1,57 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useSelector } from 'react-redux';
 
 export default function FileUpload() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false); 
   const [uploadedFileName, setUploadedFileName] = useState('');
+  const [error, setError] = useState(''); // To track errors
+
+  // Access token from Redux store
+  const token = useSelector((state) => state.user.currentUser?.token); 
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
+    setUploadedFileName(''); // Clear previous upload info
   };
 
   const handleUploadClick = async () => {
+    if (!token) {
+      setError('No token found. Please login first.');
+      return;
+    }
     if (!file) {
-      alert('Please select a file first.');
+      setError('No file selected. Please choose a file to upload.');
       return;
     }
 
     const formData = new FormData();
     formData.append('file', file);
-    setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/files/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        withCredentials: true, 
-      });
-      
-      alert('File uploaded successfully');
+      setLoading(true); // Set loading state to true
+      setError(''); // Clear previous errors
+
+      const response = await axios.post(
+        'http://localhost:3000/api/files/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`, // Use the token here
+          },
+          withCredentials: true, // If using cookies
+        }
+      );
+
+      setUploadedFileName(response.data.file.fileName); // Update state with uploaded file name
       console.log(response.data);
-
-    
-      setUploadedFileName(response.data.file.fileName);
-
-      setFile(null);
     } catch (error) {
-      alert('Error uploading file');
-      console.error(error);
+      setError('Error uploading file. Please try again.');
+      console.error('Error uploading file:', error);
     } finally {
-      setLoading(false);
+      setLoading(false); // Reset loading state
     }
   };
 
@@ -73,6 +85,11 @@ export default function FileUpload() {
         {uploadedFileName && (
           <div className="mt-4 text-green-500">
             File Uploaded: {uploadedFileName}
+          </div>
+        )}
+        {error && (
+          <div className="mt-4 text-red-500">
+            {error}
           </div>
         )}
       </div>

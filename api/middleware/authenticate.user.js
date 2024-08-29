@@ -1,11 +1,14 @@
-// authenticateUser.js
+import jwt from 'jsonwebtoken';
+
 export const authenticateUser = (req, res, next) => {
-  // Lógica para autenticar al usuario
-  // Ejemplo: Si el usuario está autenticado, asigna su ID a req.userId
-  if (req.isAuthenticated()) {
-    req.userId = req.user._id; // Asigna el ID del usuario autenticado
+  const token = req.header('Authorization')?.split(' ')[1]; 
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id; // Ensure this matches what you set in the token payload
     next();
-  } else {
+  } catch (err) {
     res.status(401).json({ message: 'Unauthorized' });
   }
 };

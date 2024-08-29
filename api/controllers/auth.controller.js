@@ -20,17 +20,28 @@ export const signup = async(req, res, next) =>{
     }
 };
 
-export const signin = async(req, res, next) =>{
-    const {email, password} = req.body;
-    try{
-        const user = await User.findOne({email});
-        if(!user) return next(errorHandler(404, 'User not found'));
+export const signin = async(req, res, next) => {
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return next(errorHandler(404, 'User not found'));
+
         const isPasswordCorrect = bcrypt.compareSync(password, user.password);
-        if(!isPasswordCorrect) return next(errorHandler(401, 'Invalid password'));
-        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET);
-        const {password: hashPassword, ...rest} = user._doc;
-        res.cookie('access_token', token, {httpOnly: true}).status(200).json(user);
-    }   catch(error){
+        if (!isPasswordCorrect) return next(errorHandler(401, 'Invalid password'));
+
+        // Generate a token
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Exclude password from response
+        const { password: hashPassword, ...userWithoutPassword } = user._doc;
+
+        // Send token and user data in the response
+        res.status(200).json({
+            success: true,
+            user: userWithoutPassword,
+            token, // Include token in the response
+        });
+    } catch (error) {
         next(error);
     }
 };

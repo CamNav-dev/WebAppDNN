@@ -14,6 +14,15 @@ const userSchema = new mongoose.Schema({
     password:{
         type: String,
         required: true,
+    },
+    identifier: {
+        type: Number,
+        required: true,
+    },
+    updated: {
+        type: Date,
+        required:true,
+        default: Date.now,
     }
 }, {timestamps: true});
 
