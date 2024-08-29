@@ -12,7 +12,7 @@ export const uploadFile = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const { originalname, mimetype } = req.file;
+    const { originalname, mimetype, buffer } = req.file;
 
     // Validate file type
     if (!isExcelFile(mimetype)) {
@@ -22,11 +22,10 @@ export const uploadFile = async (req, res) => {
     // Create a new file record in the database
     const newFile = new UploadedFile({
       fileName: originalname,
-      filePath: `uploads/${originalname}`, // You can store a pseudo file path or just omit this
       fileType: mimetype,
-      uploadedBy: req.userId || 'Anonymous', // Ensure req.userId exists, or use a default value
+      fileData: buffer,
+      uploadedBy: req.user._id,
     });
-
     await newFile.save();
 
     return res.status(200).json({ message: 'File uploaded successfully', file: newFile });

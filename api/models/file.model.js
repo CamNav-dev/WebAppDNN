@@ -5,12 +5,12 @@ const uploadedFileSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  filePath: {
+  fileType: {
     type: String,
     required: true,
   },
-  fileType: {
-    type: String,
+  fileData: {
+    type: Buffer,
     required: true,
   },
   uploadedBy: {
