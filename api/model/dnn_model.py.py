@@ -115,11 +115,6 @@ def main():
         print(f"Recall: {recall_score(y_test, predictions):.2f}")
         print(f"F1 Score: {f1_score(y_test, predictions):.2f}")
         print(f"ROC AUC: {roc_auc:.2f}")
-        print("Accuracy: 0.85")
-        print("Precision: 0.82")
-        print("Recall: 0.88")
-        print("F1 Score: 0.85")
-        print("ROC AUC: 0.92")
 
         plt.figure()
         plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')

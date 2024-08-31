@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 
-export default function FileUpload() {
+export default function FileUpload( {callback} ) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false); 
   const [uploadedFileName, setUploadedFileName] = useState('');
@@ -16,7 +16,7 @@ export default function FileUpload() {
     setUploadedFileName(''); // Clear previous upload info
   };
 
-  const handleUploadClick = async () => {s
+  const handleUploadClick = async () => {
     if (!token) {
       setError('No token found. Please login first.');
       return;
@@ -47,6 +47,7 @@ export default function FileUpload() {
 
       setUploadedFileName(response.data.file.fileName); // Update state with uploaded file name
       console.log(response.data);
+      callback();
     } catch (error) {
       setError('Error uploading file. Please try again.');
       console.error('Error uploading file:', error);

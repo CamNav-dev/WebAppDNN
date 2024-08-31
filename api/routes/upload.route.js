@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { uploadFile, updateFileName, deleteFile, getAllFiles, testFile} from '../controllers/filecontroller.js';
+import { uploadFile, updateFileName, deleteFile, getAllFiles, testFile, getFiles} from '../controllers/filecontroller.js';
 import { createFolder } from '../controllers/folder.controller.js'
 import { authenticateUser } from '../middleware/authenticate.user.js';
 
@@ -13,7 +13,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post('/upload', authenticateUser, upload.single('file'), uploadFile);
 router.put('/update', authenticateUser, updateFileName);
 router.delete('/delete/:fileId', authenticateUser, deleteFile);
-router.get('/allfiles', authenticateUser, getAllFiles);
+//router.get('/allfiles', authenticateUser, getAllFiles);
+router.get('/files', authenticateUser, getFiles);
 router.put('/update', authenticateUser, updateFileName);
 // Nueva ruta para test
 router.post('/test/:fileId', authenticateUser, testFile);

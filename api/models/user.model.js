@@ -15,10 +15,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    identifier: {
-        type: Number,
-        required: true,
-    },
     updated: {
         type: Date,
         required:true,

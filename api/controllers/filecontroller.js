@@ -42,22 +42,24 @@ export const uploadFile = async (req, res) => {
 
 // Update file name
 export const updateFileName = async (req, res) => {
-  try {
-    const { fileId, newFileName } = req.body;
+  const { fileId, newFileName } = req.body;
 
-    const file = await UploadedFile.findById(fileId);
+  try {
+    // Encuentra el archivo en la base de datos usando el ID
+    const file = await FileModel.findById(fileId);
 
     if (!file) {
       return res.status(404).json({ message: 'File not found' });
     }
 
+    // Actualiza el nombre del archivo
     file.fileName = newFileName;
     await file.save();
 
     return res.status(200).json({ message: 'File name updated successfully', file });
   } catch (error) {
-    console.error('Error in updateFileName controller:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error updating file name:', error);
+    return res.status(500).json({ message: 'Server error', error });
   }
 };
 
@@ -85,6 +87,19 @@ export const getAllFiles = async (req, res) => {
   try {
     // Retrieve all files from the database
     const files = await UploadedFile.find().populate('uploadedBy', 'username'); // Adjust based on your schema
+    return res.status(200).json(files);
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const getFiles = async (req, res) => {
+  try {
+    // Retrieve all files from the database
+    const userId = req.user._id;
+    console.log(userId);
+    const files = await UploadedFile.find({uploadedBy: userId}).populate('uploadedBy', 'username'); // Adjust based on your schema
     return res.status(200).json(files);
   } catch (error) {
     console.error('Error fetching files:', error);
