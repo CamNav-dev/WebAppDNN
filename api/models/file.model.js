@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const uploadedFileSchema = new mongoose.Schema({
   fileName: {
     type: String,
@@ -13,6 +12,10 @@ const uploadedFileSchema = new mongoose.Schema({
     type: Buffer,
     required: true,
   },
+  folderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Folder',
+  },
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -24,6 +27,22 @@ const uploadedFileSchema = new mongoose.Schema({
   },
 });
 
-const UploadedFile = mongoose.model('UploadedFile', uploadedFileSchema);
+const folderSchema = new mongoose.Schema({
+  folderName: {
+    type: String,
+    required: true,
+  },
+  parentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Folder',
+  },
+  createdDate: {
+    type: Date,
+    default: Date.now,
+  }
+});
 
-export default UploadedFile;
+const UploadedFile = mongoose.model('UploadedFile', uploadedFileSchema);
+const Folder = mongoose.model('Folder', folderSchema);
+
+export { UploadedFile, Folder };

@@ -16,7 +16,7 @@ export default function FileUpload() {
     setUploadedFileName(''); // Clear previous upload info
   };
 
-  const handleUploadClick = async () => {
+  const handleUploadClick = async () => {s
     if (!token) {
       setError('No token found. Please login first.');
       return;

@@ -1,10 +1,11 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   signInStart,
   signInFailure,
   signInSuccess,
+  signOut,
 } from "../redux/user/userSlice";
 
 export default function SignIn() {
@@ -34,16 +35,47 @@ export default function SignIn() {
       }
 
       dispatch(signInSuccess({
-        ...data.user, // User data from the response
-        token: data.token, // Token from the response
+        ...data.user,
+        token: data.token,
       }));
+      
       // Store token in local storage
-      localStorage.setItem('token', data.token); 
-      navigate('/dashboard'); 
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('tokenExpiration', new Date().getTime() + data.expiresIn);
+
+      // Schedule signout
+      setTimeout(() => {
+        dispatch(signOut());
+        localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiration');
+        navigate('/signin');
+      }, data.expiresIn);
+
+      navigate('/dashboard');
     } catch (error) {
       dispatch(signInFailure({ message: error.message }));
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const expiration = localStorage.getItem('tokenExpiration');
+    if (token && expiration) {
+      const remainingTime = parseInt(expiration) - new Date().getTime();
+      if (remainingTime > 0) {
+        setTimeout(() => {
+          dispatch(signOut());
+          localStorage.removeItem('token');
+          localStorage.removeItem('tokenExpiration');
+          navigate('/signin');
+        }, remainingTime);
+      } else {
+        dispatch(signOut());
+        localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiration');
+      }
+    }
+  }, [dispatch, navigate]);
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">

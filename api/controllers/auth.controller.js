@@ -29,8 +29,8 @@ export const signin = async(req, res, next) => {
         const isPasswordCorrect = bcrypt.compareSync(password, user.password);
         if (!isPasswordCorrect) return next(errorHandler(401, 'Invalid password'));
 
-        // Generate a token
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        // Generate a token that expires in 30 minutes
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30m' });
 
         // Exclude password from response
         const { password: hashPassword, ...userWithoutPassword } = user._doc;
@@ -39,7 +39,8 @@ export const signin = async(req, res, next) => {
         res.status(200).json({
             success: true,
             user: userWithoutPassword,
-            token, // Include token in the response
+            token,
+            expiresIn: 30 * 60 * 1000 // 30 minutes in milliseconds
         });
     } catch (error) {
         next(error);
