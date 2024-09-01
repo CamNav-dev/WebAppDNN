@@ -46,7 +46,7 @@ export const updateFileName = async (req, res) => {
 
   try {
     // Encuentra el archivo en la base de datos usando el ID
-    const file = await FileModel.findById(fileId);
+    const file = await UploadedFile.findById(fileId);
 
     if (!file) {
       return res.status(404).json({ message: 'File not found' });

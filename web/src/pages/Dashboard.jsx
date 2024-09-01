@@ -17,17 +17,6 @@ export default function Dashboard() {
     fetchFiles();
   }, [currentUser.token]);
 
-  const handleDeleteFile = async (fileId) => {
-    try {
-      await axios.delete(`/api/files/delete/${fileId}`, {
-        headers: { Authorization: `Bearer ${currentUser.token}` },
-      });
-      setFiles(files.filter((file) => file._id !== fileId));
-    } catch (error) {
-      console.error("Error deleting file:", error);
-    }
-  };
-
   const fetchFiles = async () => {
     setLoading(true);
     try {
@@ -42,42 +31,6 @@ export default function Dashboard() {
     }
     setLoading(false);
   };
-
-
-
-
-
-
-  const handleTestFile = async (fileId) => {
-    try {
-      const response = await axios.post(
-        `/api/files/test/${fileId}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${currentUser.token}` },
-        }
-      );
-      console.log("File processed successfully:", response.data);
-      alert(
-        `File processed successfully:\n${JSON.stringify(
-          response.data.output,
-          null,
-          2
-        )}`
-      );
-    } catch (error) {
-      console.error("Error testing file:", error);
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        alert(
-          `Error processing file: ${error.response.data.message}\n${error.response.data.error}`
-        );
-      } else {
-        alert(`Error processing file: ${error.message}`);
-      }
-    }
-  };
-
 
   const callBackUploadedFile = () => {
     fetchFiles();
@@ -107,7 +60,12 @@ export default function Dashboard() {
                 Upload File
               </button>
             </div>
-            <FileList files={files} loading={loading} error={error}/>
+            <FileList 
+              files={files} 
+              loading={loading} 
+              error={error} 
+              onFileUpdate={fetchFiles}
+            />
           
             <div className="mt-16">
               <h2 className="text-2xl font-bold mb-4">Upload Files</h2>
@@ -116,7 +74,6 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
-
     </div>
   );
 }
