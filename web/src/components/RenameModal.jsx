@@ -57,43 +57,38 @@ export default function FileUpload( {callback} ) {
   };
 
   return (
-    <div className="p-8">
-      <div className="bg-white shadow rounded p-8">
-        <div className="flex justify-between mb-4">
+    <div className="bg-white border border-gray-200 rounded-md p-6 mb-6">
+      <div className="flex items-center justify-center w-full">
+        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <svg className="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            <p className="mb-2 text-sm text-gray-500">
+              <span className="font-semibold">Drag and Drop or Upload</span> a file
+            </p>
+            <p className="text-xs text-gray-500">PDF, DOCX, DOC, PPTX or PPT</p>
+          </div>
+          <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} />
+        </label>
+      </div>
+      {file && (
+        <div className="mt-4 flex justify-between items-center">
+          <span className="text-sm text-gray-500">{file.name}</span>
           <button
             onClick={handleUploadClick}
-            className="bg-black text-white py-2 px-4 rounded"
-            disabled={loading} 
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            disabled={loading}
           >
-            {loading ? 'Uploading...' : 'Subir archivo'}
-          </button>
-          <button className="bg-gray-200 py-2 px-4 rounded">
-            Recent
+            {loading ? 'Uploading...' : 'Upload'}
           </button>
         </div>
-        <div
-          className="border-2 border-dashed border-gray-300 p-8 text-center text-gray-500 cursor-pointer"
-          onClick={() => document.getElementById('file-input').click()}
-        >
-          <input
-            type="file"
-            id="file-input"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          <p>{file ? file.name : 'Click to browse or drag and drop your files'}</p>
+      )}
+      {error && (
+        <div className="mt-4 text-red-500 text-sm">
+          {error}
         </div>
-        {uploadedFileName && (
-          <div className="mt-4 text-green-500">
-            File Uploaded: {uploadedFileName}
-          </div>
-        )}
-        {error && (
-          <div className="mt-4 text-red-500">
-            {error}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

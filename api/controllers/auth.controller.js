@@ -39,7 +39,7 @@ export const signin = async(req, res, next) => {
         res.status(200).json({
             success: true,
             user: userWithoutPassword,
-            token,
+            token, 
             expiresIn: 30 * 60 * 1000 // 30 minutes in milliseconds
         });
     } catch (error) {

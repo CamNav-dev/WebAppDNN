@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import FileUpload from "../components/RenameModal";
-import RenameModal from "../components/RenameFile";
 import FileList from "../components/FileList";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -53,12 +52,10 @@ export default function Dashboard() {
             </div>
 
             <div className="mb-4">
-              <button className="bg-black text-white py-2 px-4 rounded">
-                Add Folder
-              </button>
-              <button className="bg-black text-white py-2 px-4 rounded ml-2">
-                Upload File
-              </button>
+             
+            </div>
+            <div className="mt-16">
+              <FileUpload callback={callBackUploadedFile} />
             </div>
             <FileList 
               files={files} 
@@ -67,10 +64,7 @@ export default function Dashboard() {
               onFileUpdate={fetchFiles}
             />
           
-            <div className="mt-16">
-              <h2 className="text-2xl font-bold mb-4">Upload Files</h2>
-              <FileUpload callback={callBackUploadedFile} />
-            </div>
+            
           </div>
         </section>
       </div>

@@ -19,7 +19,7 @@ import traceback
 
 def main():
     try:
-        print("Python script started", file=sys.stderr)
+        print("Python script started", file=sys.stderr, flush=True)
 
         # Set seeds for reproducibility
         np.random.seed(43)
@@ -27,16 +27,16 @@ def main():
         tf.random.set_seed(43)
 
         # Read the Excel file from stdin
-        print("Reading Excel file from stdin", file=sys.stderr)
+        print("Reading Excel file from stdin", file=sys.stderr, flush=True)
         excel_data = sys.stdin.buffer.read()
         financial_data = pd.read_excel(io.BytesIO(excel_data))
         financial_ratios_data = pd.read_excel(io.BytesIO(excel_data), sheet_name='ratios')
         financial_data.fillna(0, inplace=True)
         financial_data['Fecha'] = financial_data['Fecha'].astype(str)
 
-        print("Excel file read successfully", file=sys.stderr)
-        print(f"Financial data shape: {financial_data.shape}", file=sys.stderr)
-        print(f"Financial ratios data shape: {financial_ratios_data.shape}", file=sys.stderr)
+        print("Excel file read successfully", file=sys.stderr, flush=True)
+        print(f"Financial data shape: {financial_data.shape}", file=sys.stderr, flush=True)
+        print(f"Financial ratios data shape: {financial_ratios_data.shape}", file=sys.stderr, flush=True)
 
             # Convert all categorical columns to string and compute medians
         categorical_features = ['Criterio estado financiero', 'Cuenta', 'Detalle', 'Item', 'Fecha']
@@ -93,7 +93,7 @@ def main():
 
         # Train and evaluate the model
         input_shape = preprocessor.fit_transform(X_train).shape[1]
-        smote_pipeline.set_params(kerasclassifier__model__input_shape=input_shape)
+        smote_pipeline.set_params(kerasclassifier_model_input_shape=input_shape)
         smote_pipeline.fit(X_train, y_train)
 
         # Evaluate the model and ROC curve
@@ -115,6 +115,7 @@ def main():
         print(f"Recall: {recall_score(y_test, predictions):.2f}")
         print(f"F1 Score: {f1_score(y_test, predictions):.2f}")
         print(f"ROC AUC: {roc_auc:.2f}")
+    
 
         plt.figure()
         plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
@@ -149,19 +150,20 @@ def main():
 
         # Combine all indices of detected anomalies by probabilities and ratios
         combined_indices = np.union1d(anomalies_indices, additional_ratios_indices)
-
+        
         if len(combined_indices) > 0:
             anomalies = X_test.loc[combined_indices]
-            print('Possible anomalies detected:')
-            print(anomalies)
+            print('Possible anomalies detected:', flush=True)
+            print(anomalies, flush=True)
         else:
-            print('No anomalies detected.')
-            
-        print("Python script completed successfully", file=sys.stderr)
+            print('No anomalies detected.', flush=True)
+        
+        print("Python script completed successfully", file=sys.stderr, flush=True)
     except Exception as e:
-        print(f"An error occurred: {str(e)}", file=sys.stderr)
-        print(traceback.format_exc(), file=sys.stderr)
+        print(f"An error occurred: {str(e)}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr, flush=True)
         sys.exit(1)
         
-if __name__ == "__main__":
+if __name__ == "_main_":
+
     main()

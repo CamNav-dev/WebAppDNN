@@ -96,14 +96,14 @@ export default function FileList({ files, loading, error, onFileUpdate }) {
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4">Uploaded Files</h2>
+      <h2 className="text-2xl font-bold mb-4">Reportes cargados</h2>
       <table className="min-w-full bg-white">
         <thead>
           <tr>
-            <th className="py-2">Name</th>
-            <th className="py-2">Uploaded By</th>
-            <th className="py-2">Date Created</th>
-            <th className="py-2">Actions</th>
+            <th className="py-2">Nombre</th>
+            <th className="py-2">Owner</th>
+            <th className="py-2">Fecha subida</th>
+            <th className="py-2">Acciones</th>
           </tr>
         </thead>
         <tbody>
