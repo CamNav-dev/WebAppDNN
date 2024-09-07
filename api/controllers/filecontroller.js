@@ -1,9 +1,10 @@
 import { UploadedFile } from '../models/file.model.js';
-import { exec } from 'child_process';
-import fs from 'fs';
-import tmp from 'tmp';
+import OutputDocument from '../models/ouput.model.js';
 import path from 'path'; // Import the path module
 import {spawn} from 'child_process'
+import { PassThrough } from 'stream';
+import officegen from 'officegen';
+import fs from 'fs';
 
 // Helper function to validate if the file is an Excel file
 const isExcelFile = (fileType) => {
@@ -147,18 +148,85 @@ export const testFile = async (req, res) => {
     });
 
     // Handle the completion of the Python script
-    pythonProcess.on('close', (code) => {
-      console.log(`Python process exited with code ${code}`);
-      if (code !== 0) {
-        console.error(`Python script error: ${pythonError}`);
-        return res.status(500).json({ message: 'Error processing file', error: pythonError });
-      }
-      console.log(`Python script output: ${pythonOutput}`);
-      return res.status(200).json({ message: 'File processed successfully', output: pythonOutput });
+    await new Promise((resolve, reject) => {
+      pythonProcess.on('close', async (code) => {
+        console.log(`Python process exited with code ${code}`);
+        if (code !== 0) {
+          console.error(`Python script error: ${pythonError}`);
+          reject(new Error(pythonError));
+          return;
+        }
+        console.log(`Python script output: ${pythonOutput}`);
+
+        try {
+          // Generate Word document
+          const docx = officegen('docx');
+
+          // Add a paragraph
+          const pObj = docx.createP();
+          pObj.addText(pythonOutput);
+
+          // Use PassThrough stream to capture the generated word buffer
+          const passThroughStream = new PassThrough();
+          const chunks = [];
+          
+          passThroughStream.on('data', (chunk) => {
+            chunks.push(chunk);
+          });
+
+          passThroughStream.on('end', async () => {
+            const wordBuffer = Buffer.concat(chunks);
+
+            // Save the Word document to MongoDB
+            const outputDocument = new OutputDocument({
+              fileName: `${file.fileName}_output.docx`,
+              fileData: wordBuffer,
+              fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              uploadedBy: req.user._id,
+              originalFile: file._id
+            });
+
+            await outputDocument.save();
+
+            resolve({
+              message: 'File processed successfully',
+              output: pythonOutput,
+              outputDocumentId: outputDocument._id
+            });
+          });
+
+          // Generate the Word document into the passThrough stream
+          docx.generate(passThroughStream);
+          
+        } catch (error) {
+          reject(error);
+        }
+      });
     });
+
+    const result = await new Promise((resolve) => pythonProcess.on('close', resolve));
+    return res.status(200).json(result);
 
   } catch (error) {
     console.error('Error in testFile controller:', error.stack);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+export const getOutputDocument = async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const outputDocument = await OutputDocument.findById(documentId);
+
+    if (!outputDocument) {
+      return res.status(404).json({ message: 'Output document not found' });
+    }
+
+    res.setHeader('Content-Type', outputDocument.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${outputDocument.fileName}"`);
+    res.send(outputDocument.fileData);
+
+  } catch (error) {
+    console.error('Error in getOutputDocument controller:', error.stack);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

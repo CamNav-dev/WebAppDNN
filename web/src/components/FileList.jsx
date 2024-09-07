@@ -13,7 +13,9 @@ import {
   Menu,
   MenuItem,
   TableSortLabel,
-  Checkbox
+  Checkbox,
+  Button,
+  CircularProgress,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import RenameModal from "./RenameFile";
@@ -28,6 +30,9 @@ export default function FileList({ files: initialFiles, loading, error, onFileUp
   const [selectedFile, setSelectedFile] = useState(null);
   const [orderBy, setOrderBy] = useState('uploadDate');
   const [order, setOrder] = useState('desc');
+  const [testingFile, setTestingFile] = useState(null);
+  const [testResult, setTestResult] = useState(null);
+
 
   useEffect(() => {
     setFiles(initialFiles);
@@ -92,23 +97,40 @@ export default function FileList({ files: initialFiles, loading, error, onFileUp
   };
 
   const handleTestFile = async (fileId) => {
+    setTestingFile(fileId);
+    setTestResult(null);
     try {
       const response = await axios.post(
         `/api/files/test/${fileId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("File processed successfully:", response.data);
-      alert(`File processed successfully:\n${JSON.stringify(response.data.output, null, 2)}`);
+      setTestResult(response.data);
     } catch (error) {
       console.error("Error testing file:", error);
-      if (error.response) {
-        alert(`Error processing file: ${error.response.data.message}\n${error.response.data.error}`);
-      } else {
-        alert(`Error processing file: ${error.message}`);
-      }
+      setTestResult({ error: 'An error occurred while testing the file.' });
     }
+    setTestingFile(null);
     handleMenuClose();
+  };
+
+  const handleDownload = async (documentId) => {
+    try {
+      const response = await axios.get(`/api/files/output/${documentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'output.docx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading output document:', error);
+    }
   };
 
   const handleMenuOpen = (event, file) => {
@@ -167,6 +189,12 @@ export default function FileList({ files: initialFiles, loading, error, onFileUp
                 <IconButton onClick={(event) => handleMenuOpen(event, file)}>
                   <MoreVertIcon />
                 </IconButton>
+                {testingFile === file._id && <CircularProgress size={24} />}
+                {testResult && testResult.outputDocumentId && selectedFile?._id === file._id && (
+                  <Button onClick={() => handleDownload(testResult.outputDocumentId)}>
+                    Download Output
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
           ))}
