@@ -2,7 +2,6 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import userRoutes from './routes/user.route.js';
 import authRoutes from './routes/auth.route.js';
 import fileRoutes from './routes/upload.route.js'; // Import the file routes
 
@@ -27,7 +26,6 @@ app.use(cors({
 app.use(express.json());
 
 // Use the routes
-app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes); // Add the route for file uploads
 
