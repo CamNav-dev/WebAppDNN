@@ -67,13 +67,13 @@ export default function FileUpload( {callback} ) {
             <p className="mb-2 text-sm text-gray-500">
               <span className="font-semibold">Drag and Drop or Upload</span> a file
             </p>
-            <p className="text-xs text-gray-500">PDF, DOCX, DOC, PPTX or PPT</p>
+            <p className="text-xs text-gray-500">EXCEL ONLY PLEASE</p>
           </div>
           <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} />
         </label>
       </div>
       {file && (
-        <div className="mt-4 flex justify-between items-center">
+        <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500">{file.name}</span>
           <button
             onClick={handleUploadClick}

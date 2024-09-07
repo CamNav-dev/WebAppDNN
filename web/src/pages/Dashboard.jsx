@@ -37,14 +37,14 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="flex-1 flex flex-col">
-        <section className="bg-gray-100 py-12 px-8 flex-1">
-          <div className="container mx-auto px-4">
+      <div className="flex-1 flex flex-col mx-32">
+        <section className="py- px-10 flex-1">
+          <div className="container px-4">
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-3xl md:text-4xl font-bold">Dashboard</h1>
               {currentUser && (
                 <div className="text-right">
-                  <p className="text-lg font-semibold">
+                  <p className="text-lg fonst-semibold">
                     {currentUser.username}
                   </p>
                 </div>
@@ -69,5 +69,6 @@ export default function Dashboard() {
         </section>
       </div>
     </div>
+    
   );
 }

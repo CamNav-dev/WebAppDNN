@@ -1,7 +1,6 @@
 import express from 'express';
 import multer from 'multer';
 import { uploadFile, updateFileName, deleteFile, getAllFiles, testFile, getFiles} from '../controllers/filecontroller.js';
-import { createFolder } from '../controllers/folder.controller.js'
 import { authenticateUser } from '../middleware/authenticate.user.js';
 
 const router = express.Router();
@@ -19,5 +18,4 @@ router.put('/update', authenticateUser, updateFileName);
 // Nueva ruta para test
 router.post('/test/:fileId', authenticateUser, testFile);
 // POST Folder
-router.post('/folders/create', authenticateUser, createFolder);
 export default router;

@@ -17,6 +17,7 @@ import random
 import io
 import traceback
 
+
 def main():
     try:
         print("Python script started", file=sys.stderr, flush=True)
