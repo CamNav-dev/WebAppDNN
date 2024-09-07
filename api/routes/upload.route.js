@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { uploadFile, updateFileName, deleteFile, getAllFiles, testFile, getFiles} from '../controllers/filecontroller.js';
+import { uploadFile, updateFileName, deleteFile, getAllFiles, testFile, getFiles, getOutputDocument} from '../controllers/filecontroller.js';
 import { authenticateUser } from '../middleware/authenticate.user.js';
 
 const router = express.Router();
@@ -17,5 +17,6 @@ router.get('/files', authenticateUser, getFiles);
 router.put('/update', authenticateUser, updateFileName);
 // Nueva ruta para test
 router.post('/test/:fileId', authenticateUser, testFile);
-// POST Folder
+// Nueva ruta para descargar el word
+router.get('/output/:documentId', authenticateUser, getOutputDocument);
 export default router;
