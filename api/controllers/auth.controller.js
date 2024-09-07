@@ -46,3 +46,51 @@ export const signin = async(req, res, next) => {
         next(error);
     }
 };
+
+// Delete user
+export const deleteUser = async (req, res, next) => {
+    const { id } = req.params; // Get user ID from params
+
+    try {
+        // Find the user by ID and delete it
+        const user = await User.findByIdAndDelete(id);
+
+        // If user doesn't exist, throw an error
+        if (!user) return next(errorHandler(404, 'User not found'));
+
+        // Successful deletion
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        next(error); // Pass error to error handler middleware
+    }
+};
+
+// Update user
+export const updateUser = async (req, res, next) => {
+    const { id } = req.params;
+    const { username, email, password } = req.body;
+
+    try {
+        // Fetch the user from the database
+        let user = await User.findById(id);
+
+        if (!user) return next(errorHandler(404, 'User not found'));
+
+        // Update the fields only if they are provided
+        if (username) user.username = username;
+        if (email) user.email = email;
+
+        // Rehash the password if provided
+        if (password) {
+            const hashPassword = bcrypt.hashSync(password, 10);
+            user.password = hashPassword;
+        }
+
+        // Save the updated user
+        await user.save();
+
+        res.status(200).json({ message: 'User updated successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
