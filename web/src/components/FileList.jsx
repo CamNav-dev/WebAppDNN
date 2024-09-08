@@ -16,37 +16,57 @@ import {
   Checkbox,
   Button,
   CircularProgress,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import RenameModal from "./RenameFile";
 
-export default function FileList({ files: initialFiles, loading, error, onFileUpdate }) {
+export default function FileList({
+  files: initialFiles,
+  outputFiles: initialOutputFiles,
+  loading,
+  error,
+  onFileUpdate,
+  onOutputFileUpdate,
+}) {
   const token = useSelector((state) => state.user.currentUser?.token);
   const [files, setFiles] = useState(initialFiles);
+  const [outputFiles, setOutputFiles] = useState(initialOutputFiles);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [fileToRename, setFileToRename] = useState(null);
   const [newFileName, setNewFileName] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [orderBy, setOrderBy] = useState('uploadDate');
-  const [order, setOrder] = useState('desc');
+  const [orderBy, setOrderBy] = useState("uploadDate");
+  const [order, setOrder] = useState("desc");
   const [testingFile, setTestingFile] = useState(null);
   const [testResult, setTestResult] = useState(null);
-
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+  console.log("FileList props:", { files, outputFiles, loading, error });
 
   useEffect(() => {
     setFiles(initialFiles);
-  }, [initialFiles]);
+    setOutputFiles(initialOutputFiles);
+  }, [initialFiles, initialOutputFiles]);
 
   const handleSort = (property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
     const sortedFiles = [...files].sort((a, b) => {
-      if (property === 'uploadDate') {
-        return isAsc ? new Date(a[property]) - new Date(b[property]) : new Date(b[property]) - new Date(a[property]);
+      if (property === "uploadDate") {
+        return isAsc
+          ? new Date(a[property]) - new Date(b[property])
+          : new Date(b[property]) - new Date(a[property]);
       }
-      return isAsc ? a[property].localeCompare(b[property]) : b[property].localeCompare(a[property]);
+      return isAsc
+        ? a[property].localeCompare(b[property])
+        : b[property].localeCompare(a[property]);
     });
     setFiles(sortedFiles);
   };
@@ -108,28 +128,42 @@ export default function FileList({ files: initialFiles, loading, error, onFileUp
       setTestResult(response.data);
     } catch (error) {
       console.error("Error testing file:", error);
-      setTestResult({ error: 'An error occurred while testing the file.' });
+      setTestResult({ error: "An error occurred while testing the file." });
     }
     setTestingFile(null);
     handleMenuClose();
   };
 
-  const handleDownload = async (documentId) => {
+  const handleDownload = async (documentId, fileName) => {
     try {
       const response = await axios.get(`/api/files/output/${documentId}`, {
         headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
+        responseType: "blob",
       });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+
+      const contentType = response.headers["content-type"];
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'output.docx');
+      link.setAttribute("download", fileName || "output.docx");
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setSnackbar({
+        open: true,
+        message: "File downloaded successfully",
+        severity: "success",
+      });
     } catch (error) {
-      console.error('Error downloading output document:', error);
+      console.error("Error downloading output document:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to download file. Please try again.",
+        severity: "error",
+      });
     }
   };
 
@@ -147,67 +181,108 @@ export default function FileList({ files: initialFiles, loading, error, onFileUp
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell padding="checkbox">
-              <Checkbox />
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'fileName'}
-                direction={orderBy === 'fileName' ? order : 'asc'}
-                onClick={() => handleSort('fileName')}
-              >
-                Name
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>Owner</TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'uploadDate'}
-                direction={orderBy === 'uploadDate' ? order : 'asc'}
-                onClick={() => handleSort('uploadDate')}
-              >
-                Upload Date
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {files.map((file) => (
-            <TableRow key={file._id}>
+    <>
+      <TableContainer component={Paper}>
+        <h2>Uploaded Files</h2>
+        <Table>
+          <TableHead>
+            <TableRow>
               <TableCell padding="checkbox">
                 <Checkbox />
               </TableCell>
-              <TableCell>{file.fileName}</TableCell>
-              <TableCell>{file.uploadedBy.username}</TableCell>
-              <TableCell>{new Date(file.uploadDate).toLocaleDateString()}</TableCell>
               <TableCell>
-                <IconButton onClick={(event) => handleMenuOpen(event, file)}>
-                  <MoreVertIcon />
-                </IconButton>
-                {testingFile === file._id && <CircularProgress size={24} />}
-                {testResult && testResult.outputDocumentId && selectedFile?._id === file._id && (
-                  <Button onClick={() => handleDownload(testResult.outputDocumentId)}>
-                    Download Output
-                  </Button>
-                )}
+                <TableSortLabel
+                  active={orderBy === "fileName"}
+                  direction={orderBy === "fileName" ? order : "asc"}
+                  onClick={() => handleSort("fileName")}
+                >
+                  Name
+                </TableSortLabel>
               </TableCell>
+              <TableCell>Owner</TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === "uploadDate"}
+                  direction={orderBy === "uploadDate" ? order : "asc"}
+                  onClick={() => handleSort("uploadDate")}
+                >
+                  Upload Date
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {files.map((file) => (
+              <TableRow key={file._id}>
+                <TableCell padding="checkbox">
+                  <Checkbox />
+                </TableCell>
+                <TableCell>{file.fileName}</TableCell>
+                <TableCell>{file.uploadedBy.username}</TableCell>
+                <TableCell>
+                  {new Date(file.uploadDate).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <IconButton onClick={(event) => handleMenuOpen(event, file)}>
+                    <MoreVertIcon />
+                  </IconButton>
+                  {testingFile === file._id && <CircularProgress size={24} />}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <TableContainer component={Paper} style={{ marginTop: "2rem" }}>
+        <h2>Output Files</h2>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Original File</TableCell>
+              <TableCell>Upload Date</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {outputFiles.map((outputFile) => (
+              <TableRow key={outputFile._id}>
+                <TableCell>{outputFile.fileName}</TableCell>
+                <TableCell>{outputFile.originalFile.fileName}</TableCell>
+                <TableCell>
+                  {new Date(outputFile.uploadDate).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    onClick={() =>
+                      handleDownload(outputFile._id, outputFile.fileName)
+                    }
+                  >
+                    Download
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={() => openRenameModal(selectedFile)}>Rename</MenuItem>
-        <MenuItem onClick={() => handleDeleteFile(selectedFile?._id)}>Delete</MenuItem>
-        <MenuItem onClick={() => handleTestFile(selectedFile?._id)}>Test</MenuItem>
+        <MenuItem onClick={() => openRenameModal(selectedFile)}>
+          Rename
+        </MenuItem>
+        <MenuItem onClick={() => handleDeleteFile(selectedFile?._id)}>
+          Delete
+        </MenuItem>
+        <MenuItem onClick={() => handleTestFile(selectedFile?._id)}>
+          Test
+        </MenuItem>
       </Menu>
       <RenameModal
         isOpen={isRenameModalOpen}
@@ -216,6 +291,15 @@ export default function FileList({ files: initialFiles, loading, error, onFileUp
         fileName={newFileName}
         setFileName={setNewFileName}
       />
-    </TableContainer>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 }

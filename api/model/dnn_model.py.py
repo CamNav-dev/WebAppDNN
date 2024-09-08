@@ -17,8 +17,7 @@ import random
 import io
 import traceback
 from docx import Document
-from docx.shared import Inches
-from docx.shared import Pt  
+from docx.shared import Inches, Pt
 
 def add_dataframe_to_doc(doc, dataframe, title):
     doc.add_heading(title, level=1)

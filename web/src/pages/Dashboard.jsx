@@ -8,12 +8,13 @@ import { useSelector } from "react-redux";
 export default function Dashboard() {
   const { currentUser } = useSelector((state) => state.user);
   const [files, setFiles] = useState([]);
+  const [outputFiles, setOutputFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-
   useEffect(() => {
     fetchFiles();
+    fetchOutputFiles();
   }, [currentUser.token]);
 
   const fetchFiles = async () => {
@@ -22,11 +23,26 @@ export default function Dashboard() {
       const response = await axios.get("/api/files/files", {
         headers: { Authorization: `Bearer ${currentUser.token}` },
       });
+      console.log("Files fetched:", response.data);
       setFiles(response.data);
-
     } catch (error) {
-      setError(error);
       console.error("Error fetching files:", error);
+      setError(error);
+    }
+    setLoading(false);
+  };
+
+  const fetchOutputFiles = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get("/api/files/output-files", {
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      });
+      console.log("Output files fetched:", response.data);
+      setOutputFiles(response.data);
+    } catch (error) {
+      console.error("Error fetching output files:", error);
+      setError(error);
     }
     setLoading(false);
   };
@@ -50,25 +66,25 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-
+            
             <div className="mb-4">
-             
+              
             </div>
             <div className="mt-16">
               <FileUpload callback={callBackUploadedFile} />
             </div>
-            <FileList 
-              files={files} 
-              loading={loading} 
-              error={error} 
+            <FileList
+              files={files}
+              outputFiles={outputFiles}
+              loading={loading}
+              error={error}
               onFileUpdate={fetchFiles}
+              onOutputFileUpdate={fetchOutputFiles}
             />
-          
             
           </div>
         </section>
       </div>
     </div>
-    
   );
 }

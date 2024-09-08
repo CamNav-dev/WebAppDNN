@@ -221,12 +221,34 @@ export const getOutputDocument = async (req, res) => {
       return res.status(404).json({ message: 'Output document not found' });
     }
 
-    res.setHeader('Content-Type', outputDocument.mimeType);
+    // Set a default Content-Type if it's not available in the document
+    const contentType = outputDocument.fileType || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${outputDocument.fileName}"`);
-    res.send(outputDocument.fileData);
+    
+    // Check if fileData exists and is a Buffer
+    if (outputDocument.fileData && Buffer.isBuffer(outputDocument.fileData)) {
+      res.send(outputDocument.fileData);
+    } else {
+      throw new Error('File data is missing or invalid');
+    }
 
   } catch (error) {
-    console.error('Error in getOutputDocument controller:', error.stack);
+    console.error('Error in getOutputDocument controller:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const getOutputFiles = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const outputDocuments = await OutputDocument.find({uploadedBy: userId})
+      .populate('uploadedBy', 'username')
+      .populate('originalFile', 'fileName');
+    return res.status(200).json(outputDocuments);
+  } catch (error) {
+    console.error('Error fetching output files:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
