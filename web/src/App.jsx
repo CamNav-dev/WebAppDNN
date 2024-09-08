@@ -14,7 +14,7 @@ import PrivateRoute from './components/PrivateRoute';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { updateToken } from '../src/redux/user/userSlice.js';
-
+import Contact from './pages/Contact';
 
 export default function App() {
   const dispatch = useDispatch();
@@ -38,7 +38,7 @@ export default function App() {
            <Route path="/about" element={<About />} />
            <Route path="/signin" element={<SignIn />} />
            <Route path="/signup" element={<SignUp />} />
-           
+           <Route path="/contact" element={<Contact />} />
            {/* Protect the dashboard and profile routes with PrivateRoute */}
            <Route path="/dashboard" element={
              <PrivateRoute>

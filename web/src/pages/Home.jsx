@@ -1,5 +1,4 @@
 import React from "react";
-
 export default function Home() {
   return (
     <div className=" flex flex-col ">
@@ -174,7 +173,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       <section id="testimonials" className="bg-gray-100 py-20">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-800 mb-14">
@@ -230,7 +228,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       <section id="faq" className="bg-gray-100 py-20">
         <div className="container mx-auto px-20 my-3">
           <h2 className="text-3xl font-bold text-left mb-8 text-gray-800">
