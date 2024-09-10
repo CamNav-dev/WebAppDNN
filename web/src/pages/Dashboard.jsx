@@ -52,7 +52,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col">
       <div className="flex-1 flex flex-col mx-32">
         <section className="py- px-10 flex-1">
           <div className="container px-4">
@@ -85,6 +85,22 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+      <footer className="bg-blue-600 text-white py-6 mt-auto">
+        <div className="container text-center my-3">
+          <p>&copy; 2024 FraudDetect Inc. All rights reserved.</p>
+          <div className="flex justify-center space-x-6 mt-4">
+            <a href="#" className="hover:text-blue-300">
+              Twitter
+            </a>
+            <a href="#" className="hover:text-blue-300">
+              LinkedIn
+            </a>
+            <a href="#" className="hover:text-blue-300">
+              Contact Us
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
