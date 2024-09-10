@@ -11,6 +11,8 @@ import About from './pages/About';
 import Dashboard from './pages/Dashboard';
 import Header from './components/Header';
 import PrivateRoute from './components/PrivateRoute';
+import Contact from './pages/Contact';
+
 
 export default function App() {
   return (
@@ -23,6 +25,7 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/contact" element={<Contact />} />
             <Route element={<PrivateRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
