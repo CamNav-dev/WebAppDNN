@@ -40,7 +40,7 @@ function Header() {
           </Typography>
           <Button color="inherit" component={Link} to="/">Inicio</Button>
           <Button color="inherit" component={Link} to="/about">Nosotras</Button>
-          <Button color="inherit" component={Link} to="/">Contáctanos</Button>
+          <Button color="inherit" component={Link} to="/contact">Contáctanos</Button>
           
           {currentUser ? (
             <>
