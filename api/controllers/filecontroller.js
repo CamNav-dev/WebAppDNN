@@ -5,6 +5,9 @@ import {spawn} from 'child_process'
 import { PassThrough } from 'stream';
 import officegen from 'officegen';
 import fs from 'fs';
+import { PassThrough } from 'stream';
+import officegen from 'officegen';
+import fs from 'fs';
 
 // Helper function to validate if the file is an Excel file
 const isExcelFile = (fileType) => {
@@ -119,24 +122,22 @@ export const testFile = async (req, res) => {
 
     const fileBuffer = Buffer.from(file.fileData.buffer);
 
-    // Path to your Python script
     const pythonScriptPath = path.resolve('C:\\DNNWebApp\\api\\model\\dnn_model.py.py');
 
     console.log(`Executing Python script: ${pythonScriptPath}`);
 
-    // Spawn a Python process
+    // lanzar el proceso de Python y envía el contenido del archivo (guardado en MongoDB como un Buffer) a través de stdin
     const pythonProcess = spawn('python', [pythonScriptPath], {
       env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
     });
 
-    // Send the file buffer to the Python script via stdin
     pythonProcess.stdin.write(fileBuffer);
     pythonProcess.stdin.end();
 
     let pythonOutput = '';
     let pythonError = '';
 
-    // Collect output from the Python script
+    // script de Python genera una salida que es capturada por el backend
     pythonProcess.stdout.on('data', (data) => {
       console.log(`Python stdout: ${data}`);
       pythonOutput += data.toString('utf-8');
@@ -159,14 +160,13 @@ export const testFile = async (req, res) => {
         console.log(`Python script output: ${pythonOutput}`);
 
         try {
-          // Generate Word document
+          // Utiliza el paquete officegen para crear un documento de Word
           const docx = officegen('docx');
-
-          // Add a paragraph
+          // Se inserta el texto del resultado del script de Python (pythonOutput) en el documento como un párrafo.
           const pObj = docx.createP();
           pObj.addText(pythonOutput);
 
-          // Use PassThrough stream to capture the generated word buffer
+          // utiliza un stream (PassThrough) para capturar el contenido del documento en un Buffer
           const passThroughStream = new PassThrough();
           const chunks = [];
           
@@ -195,7 +195,6 @@ export const testFile = async (req, res) => {
             });
           });
 
-          // Generate the Word document into the passThrough stream
           docx.generate(passThroughStream);
           
         } catch (error) {
@@ -221,12 +220,34 @@ export const getOutputDocument = async (req, res) => {
       return res.status(404).json({ message: 'Output document not found' });
     }
 
-    res.setHeader('Content-Type', outputDocument.mimeType);
+    // Set a default Content-Type if it's not available in the document
+    const contentType = outputDocument.fileType || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${outputDocument.fileName}"`);
-    res.send(outputDocument.fileData);
+    
+    // Check if fileData exists and is a Buffer
+    if (outputDocument.fileData && Buffer.isBuffer(outputDocument.fileData)) {
+      res.send(outputDocument.fileData);
+    } else {
+      throw new Error('File data is missing or invalid');
+    }
 
   } catch (error) {
-    console.error('Error in getOutputDocument controller:', error.stack);
+    console.error('Error in getOutputDocument controller:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const getOutputFiles = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const outputDocuments = await OutputDocument.find({uploadedBy: userId})
+      .populate('uploadedBy', 'username')
+      .populate('originalFile', 'fileName');
+    return res.status(200).json(outputDocuments);
+  } catch (error) {
+    console.error('Error fetching output files:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
