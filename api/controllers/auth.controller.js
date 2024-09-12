@@ -2,6 +2,8 @@ import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import { errorHandler } from '../utils/error.js';
 import jwt from 'jsonwebtoken';
+import PaymentInfo from '../models/payment.model.js';
+
 export const signup = async(req, res, next) =>{
     const {username, email, password} = req.body;
     {/* Password encypted */}
@@ -94,3 +96,35 @@ export const updateUser = async (req, res, next) => {
         next(error);
     }
 };
+    
+export const payment = async (req, res, next) => {
+    const { userId } = req.params;
+    const { cardHolder, cardNumber, expiryDate, cvv } = req.body;
+
+    try {
+        // Encuentra el registro de pago o crea uno nuevo
+        let paymentInfo = await PaymentInfo.findOne({ user: userId });
+        if (!paymentInfo) {
+            paymentInfo = new PaymentInfo({ user: userId });
+        }
+
+        paymentInfo.cardHolder = cardHolder;
+
+        // Cifrar el número de tarjeta
+        const hashCardNumber = bcrypt.hashSync(cardNumber, 10);
+        paymentInfo.cardNumber = hashCardNumber;
+
+        paymentInfo.expiryDate = expiryDate;
+
+        // Cifrar el CVV (No recomendado almacenar CVV)
+        const hashCvv = bcrypt.hashSync(cvv, 10);
+        paymentInfo.cvv = hashCvv;
+
+        await paymentInfo.save();
+        res.status(200).json({ message: 'Payment details updated successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
