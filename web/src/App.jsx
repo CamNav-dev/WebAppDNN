@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Header from './components/Header';
 import PrivateRoute from './components/PrivateRoute';
 import Contact from './pages/Contact';
+import Payment from './pages/Payment';
 
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/payment" element={<Payment />} />
             <Route element={<PrivateRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
