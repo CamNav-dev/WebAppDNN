@@ -52,7 +52,7 @@ function Header() {
                 onClick={handleMenu}
                 color="inherit"
               >
-                <Avatar>{currentUser.username[0]}</Avatar>
+                <Avatar>{currentUser.username}</Avatar>
               </IconButton>
               <Menu
                 id="menu-appbar"

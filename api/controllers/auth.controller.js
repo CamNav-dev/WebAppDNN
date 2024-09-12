@@ -9,7 +9,12 @@ export const signup = async(req, res, next) =>{
     const newUser =  new User({
         username,
         email,
-        password: hashPassword
+        password: hashPassword,
+        creditCard: {
+            number: '',
+            expiry: '',
+            cvv: ''
+        } 
     });
 
     try{ 
@@ -67,30 +72,40 @@ export const deleteUser = async (req, res, next) => {
 
 // Update user
 export const updateUser = async (req, res, next) => {
-    const { id } = req.params;
-    const { username, email, password } = req.body;
+    const { id } = req.params;  // El ID del usuario que se va a actualizar
+    const { username, email, password, creditCard, role, country } = req.body;  // Agregar los campos faltantes
 
     try {
-        // Fetch the user from the database
+        // Buscar el usuario en la base de datos por su ID
         let user = await User.findById(id);
 
-        if (!user) return next(errorHandler(404, 'User not found'));
+        if (!user) return next(errorHandler(404, 'User not found'));  // Si el usuario no se encuentra, lanzar error
 
-        // Update the fields only if they are provided
+        // Actualizar los campos solo si se proporcionan
         if (username) user.username = username;
         if (email) user.email = email;
 
-        // Rehash the password if provided
+        // Rehashear la contraseña si se proporciona una nueva
         if (password) {
             const hashPassword = bcrypt.hashSync(password, 10);
             user.password = hashPassword;
         }
 
-        // Save the updated user
-        await user.save();
+        // Actualización de otros campos opcionales
+        if (creditCard) user.creditCard = creditCard;
+        if (role) user.role = role;
+        if (country) user.country = country;
 
-        res.status(200).json({ message: 'User updated successfully' });
+        // Guardar el usuario actualizado en la base de datos
+        const updatedUser = await user.save();
+
+        // Enviar una respuesta de éxito con el usuario actualizado
+        res.status(200).json({
+            message: 'User updated successfully',
+            user: updatedUser  // Devuelve los datos del usuario actualizado
+        });
     } catch (error) {
-        next(error);
+        next(error);  // En caso de error, manejarlo con el middleware de error
     }
 };
+
