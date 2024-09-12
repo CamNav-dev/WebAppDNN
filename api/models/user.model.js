@@ -19,8 +19,12 @@ const userSchema = new mongoose.Schema({
         type: Date,
         required:true,
         default: Date.now,
+    },
+    paymentInfo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PaymentInfo'
     }
-}, {timestamps: true});
+});
 
 const User = mongoose.model('User', userSchema);
 
