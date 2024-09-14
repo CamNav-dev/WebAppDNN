@@ -119,7 +119,8 @@ export const testFile = async (req, res) => {
 
     const fileBuffer = Buffer.from(file.fileData.buffer);
 
-    const pythonScriptPath = path.resolve('C:\\DNNWebApp\\api\\model\\dnn_model.py.py');
+    // Ruta a tu script de Python
+    const pythonScriptPath = path.resolve("C:\\DNNWebApp\\api\\model\\dnn_model.py.py");
 
     console.log(`Ejecutando script de Python: ${pythonScriptPath}`);
 
