@@ -121,118 +121,88 @@ export const testFile = async (req, res) => {
 
     const pythonScriptPath = path.resolve('C:\\DNNWebApp\\api\\model\\dnn_model.py.py');
 
-    console.log(`Executing Python script: ${pythonScriptPath}`);
+    console.log(`Ejecutando script de Python: ${pythonScriptPath}`);
 
-    // lanzar el proceso de Python y envía el contenido del archivo (guardado en MongoDB como un Buffer) a través de stdin
+    // Iniciar el proceso de Python
     const pythonProcess = spawn('python', [pythonScriptPath], {
       env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
     });
 
+    // Enviar el archivo a Python a través de stdin
     pythonProcess.stdin.write(fileBuffer);
     pythonProcess.stdin.end();
 
-    let pythonOutput = '';
-    let pythonError = '';
+    let pythonOutput = Buffer.from([]);
 
-    // script de Python genera una salida que es capturada por el backend
+    // Capturar la salida binaria del script de Python
     pythonProcess.stdout.on('data', (data) => {
-      console.log(`Python stdout: ${data}`);
-      pythonOutput += data.toString('utf-8');
+      pythonOutput = Buffer.concat([pythonOutput, data]);
     });
 
+    // Capturar los errores del script de Python
     pythonProcess.stderr.on('data', (data) => {
-      console.error(`Python stderr: ${data}`);
-      pythonError += data.toString('utf-8');
+      console.error(`Error de Python: ${data.toString()}`);
     });
 
-    // Handle the completion of the Python script
-    await new Promise((resolve, reject) => {
-      pythonProcess.on('close', async (code) => {
-        console.log(`Python process exited with code ${code}`);
-        if (code !== 0) {
-          console.error(`Python script error: ${pythonError}`);
-          reject(new Error(pythonError));
-          return;
-        }
-        console.log(`Python script output: ${pythonOutput}`);
+    // Manejar la finalización del proceso de Python
+    pythonProcess.on('close', async (code) => {
+      console.log(`Proceso de Python terminó con código ${code}`);
 
-        try {
-          // Utiliza el paquete officegen para crear un documento de Word
-          const docx = officegen('docx');
-          // Se inserta el texto del resultado del script de Python (pythonOutput) en el documento como un párrafo.
-          const pObj = docx.createP();
-          pObj.addText(pythonOutput);
+      if (code !== 0) {
+        return res.status(500).json({ message: 'Error en el proceso de Python' });
+      }
 
-          // utiliza un stream (PassThrough) para capturar el contenido del documento en un Buffer
-          const passThroughStream = new PassThrough();
-          const chunks = [];
-          
-          passThroughStream.on('data', (chunk) => {
-            chunks.push(chunk);
-          });
+      try {
+        // Guardar el documento generado en MongoDB
+        const outputDocument = new OutputDocument({
+          fileName: `${file.fileName}_output.docx`,
+          fileData: pythonOutput,  // Aquí se guarda el archivo Word generado
+          fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          uploadedBy: req.user._id,
+          originalFile: file._id
+        });
 
-          passThroughStream.on('end', async () => {
-            const wordBuffer = Buffer.concat(chunks);
+        await outputDocument.save();
 
-            // Save the Word document to MongoDB
-            const outputDocument = new OutputDocument({
-              fileName: `${file.fileName}_output.docx`,
-              fileData: wordBuffer,
-              fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              uploadedBy: req.user._id,
-              originalFile: file._id
-            });
-
-            await outputDocument.save();
-
-            resolve({
-              message: 'File processed successfully',
-              output: pythonOutput,
-              outputDocumentId: outputDocument._id
-            });
-          });
-
-          docx.generate(passThroughStream);
-          
-        } catch (error) {
-          reject(error);
-        }
-      });
+        // Responder al cliente con el ID del documento
+        return res.status(200).json({
+          message: 'Archivo procesado correctamente',
+          outputDocumentId: outputDocument._id
+        });
+      } catch (error) {
+        console.error('Error al guardar el documento en MongoDB:', error);
+        return res.status(500).json({ message: 'Error al guardar el archivo' });
+      }
     });
-
-    const result = await new Promise((resolve) => pythonProcess.on('close', resolve));
-    return res.status(200).json(result);
-
   } catch (error) {
-    console.error('Error in testFile controller:', error.stack);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error en el controlador testFile:', error.stack);
+    return res.status(500).json({ message: 'Error del servidor', error: error.message });
   }
 };
+
 export const getOutputDocument = async (req, res) => {
   try {
     const { documentId } = req.params;
     const outputDocument = await OutputDocument.findById(documentId);
 
     if (!outputDocument) {
-      return res.status(404).json({ message: 'Output document not found' });
+      return res.status(404).json({ message: 'Documento de salida no encontrado' });
     }
-    
-    // Set a default Content-Type if it's not available in the document
-    const contentType = outputDocument.fileType || 'application/octet-stream';
 
+    // Establecer el tipo de contenido para la descarga del archivo
+    const contentType = outputDocument.fileType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${outputDocument.fileName}"`);
-    
-    // Check if fileData exists and is a Buffer
+
+    // Comprobar si los datos del archivo existen y si son de tipo Buffer
     if (outputDocument.fileData && Buffer.isBuffer(outputDocument.fileData)) {
       res.send(outputDocument.fileData);
     } else {
-      throw new Error('File data is missing or invalid');
+      throw new Error('Datos del archivo no válidos o faltantes');
     }
-
   } catch (error) {
-    console.error('Error in getOutputDocument controller:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error en el controlador getOutputDocument:', error);
+    res.status(500).json({ message: 'Error del servidor', error: error.message });
   }
 };
 
