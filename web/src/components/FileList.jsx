@@ -30,6 +30,7 @@ export default function FileList({
   onFileUpdate,
   onOutputFileUpdate,
 }) {
+
   const token = useSelector((state) => state.user.currentUser?.token);
   const [files, setFiles] = useState(initialFiles);
   const [outputFiles, setOutputFiles] = useState(initialOutputFiles);
@@ -89,10 +90,13 @@ export default function FileList({
       await axios.put(
         "/api/files/update",
         { fileId: fileToRename._id, newFileName },
-        { headers: { Authorization: `Bearer ${token}` } } // Fix: Use `token`
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       if (typeof onFileUpdate === "function") {
         onFileUpdate();
+      }
+      if (typeof onOutputFileUpdate === "function") {
+        onOutputFileUpdate();
       }
       closeRenameModal();
     } catch (error) {
@@ -104,10 +108,13 @@ export default function FileList({
   const handleDeleteFile = async (fileId) => {
     try {
       await axios.delete(`/api/files/delete/${fileId}`, {
-        headers: { Authorization: `Bearer ${token}` }, // Fix: Use `token`
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (typeof onFileUpdate === "function") {
         onFileUpdate();
+      }
+      if (typeof onOutputFileUpdate === "function") {
+        onOutputFileUpdate();
       }
     } catch (error) {
       console.error("Error deleting file:", error);
@@ -123,9 +130,12 @@ export default function FileList({
       const response = await axios.post(
         `/api/files/test/${fileId}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } } // Fix: Use `token`
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setTestResult(response.data);
+      if (typeof onOutputFileUpdate === "function") {
+        onOutputFileUpdate();
+      }
     } catch (error) {
       console.error("Error testing file:", error);
       setTestResult({ error: "An error occurred while testing the file." });
@@ -133,7 +143,6 @@ export default function FileList({
     setTestingFile(null);
     handleMenuClose();
   };
-  
   const handleDownload = async (documentId, fileName) => {
     try {
       const response = await axios.get(`/api/files/output/${documentId}`, {

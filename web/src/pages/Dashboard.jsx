@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -17,19 +17,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error("No token available.");
-      setError("No token available.");
-      navigate("/signin");
-    } else {
-      fetchFiles();
-      fetchOutputFiles();
-    }
-  }, [navigate]);
-
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -45,10 +33,9 @@ export default function Dashboard() {
       handleApiError(error);
     }
     setLoading(false);
-  };
-  
+  }, []);
 
-  const fetchOutputFiles = async () => {
+  const fetchOutputFiles = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -62,13 +49,24 @@ export default function Dashboard() {
       handleApiError(error);
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error("No token available.");
+      setError("No token available.");
+      navigate("/signin");
+    } else {
+      fetchFiles();
+      fetchOutputFiles();
+    }
+  }, [navigate, fetchFiles, fetchOutputFiles]);
 
   const handleApiError = async (error) => {
     if (error.response && error.response.status === 401) {
       try {
         await refreshToken();
-        // Si el refresh es exitoso, reintenta la operación
         fetchFiles();
         fetchOutputFiles();
       } catch (refreshError) {
@@ -83,6 +81,7 @@ export default function Dashboard() {
 
   const callBackUploadedFile = () => {
     fetchFiles();
+    fetchOutputFiles();
   }
 
   return (
@@ -101,9 +100,6 @@ export default function Dashboard() {
               )}
             </div>
             
-            <div className="mb-4">
-              
-            </div>
             <div className="mt-16">
               <FileUpload callback={callBackUploadedFile} />
             </div>
@@ -123,15 +119,9 @@ export default function Dashboard() {
         <div className="container text-center my-3">
           <p>&copy; 2024 FraudDetect Inc. All rights reserved.</p>
           <div className="flex justify-center space-x-6 mt-4">
-            <a href="#" className="hover:text-blue-300">
-              Twitter
-            </a>
-            <a href="#" className="hover:text-blue-300">
-              LinkedIn
-            </a>
-            <a href="#" className="hover:text-blue-300">
-              Contact Us
-            </a>
+            <a href="#" className="hover:text-blue-300">Twitter</a>
+            <a href="#" className="hover:text-blue-300">LinkedIn</a>
+            <a href="#" className="hover:text-blue-300">Contact Us</a>
           </div>
         </div>
       </footer>
