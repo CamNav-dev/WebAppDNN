@@ -18,6 +18,9 @@ import io
 import traceback
 from docx import Document
 from docx.shared import Inches, Pt
+from docx.shared import RGBColor
+from io import BytesIO
+
 
 def add_dataframe_to_doc(doc, dataframe, title):
     doc.add_heading(title, level=1)
@@ -89,12 +92,12 @@ def main():
         current_liabilities = financial_data.loc[financial_data['Cuenta'] == 'PASIVO CORRIENTE', 'Monto'].sum()
         cash = financial_data.loc[financial_data['Cuenta'].str.contains('Efectivo y Equivalentes de Efectivo'), 'Monto'].sum()
 
-        financial_data['GP_to_Sales'] = gross_profit / total_sales
-        financial_data['GP_to_Total_Assets'] = gross_profit / total_assets
-        financial_data['EBT_to_Equity'] = (gross_profit - cost_of_sales) / equity
-        financial_data['ROE'] = gross_profit / equity
-        financial_data['Cash_to_Total_Liabilities'] = cash / total_liabilities
-        financial_data['Total_Liabilities_to_Equity'] = total_liabilities / equity
+        financial_data['Margen de Ganancia Bruta sobre Ventas'] = gross_profit / total_sales
+        financial_data['Rentabilidad de los Activos Totales'] = gross_profit / total_assets
+        financial_data['Rentabilidad del Patrimonio antes de Impuestos'] = (gross_profit - cost_of_sales) / equity
+        financial_data['Rentabilidad sobre el Patrimonio'] = gross_profit / equity
+        financial_data['Cobertura de Efectivo sobre Pasivos Totales'] = cash / total_liabilities
+        financial_data['Ratio de Endeudamiento'] = total_liabilities / equity
 
         X = financial_data.drop(['Monto', 'Label'], axis=1)
         y = financial_data['Label']
@@ -139,17 +142,17 @@ def main():
         plt.savefig("roc_curve.png")
         plt.close()
 
-        anomaly_threshold = 0.95
+        anomaly_threshold = 0.98
         anomalies_indices = np.where((probabilities > anomaly_threshold) & (predictions == 1))[0]
         anomalies_indices = X_test.iloc[anomalies_indices].index 
 
         thresholds = {
-            'GP_to_Sales': 2.0,  
-            'GP_to_Total_Assets': 2.0, 
-            'EBT_to_Equity': 7.0, 
-            'ROE': 5.0,
-            'Cash_to_Total_Liabilities': 1.0, 
-            'Total_Liabilities_to_Equity': 2.0,
+            'Margen de Ganancia Bruta sobre Ventas': 1.0,  
+            'Rentabilidad de los Activos Totales': 2.0, 
+            'Rentabilidad del Patrimonio antes de Impuestos': 7.0, 
+            'Rentabilidad sobre el Patrimonio': 4.0,
+            'Cobertura de Efectivo sobre Pasivos Totales': 5.0, 
+            'Ratio de Endeudamiento': 8.0,
         }
 
         additional_ratios_indices = []
@@ -161,25 +164,54 @@ def main():
         combined_indices = np.union1d(anomalies_indices, additional_ratios_indices)
 
         doc = Document()
-        doc.add_heading('Financial Anomaly Detection Report', 0)
+        doc.add_heading('Informe de detección de anomalías financieras', 0)
 
-        doc.add_heading('Performance Metrics', level=1)
-        doc.add_paragraph(f"Accuracy: {accuracy_score(y_test, predictions):.2f}")
-        doc.add_paragraph(f"Precision: {precision_score(y_test, predictions):.2f}")
-        doc.add_paragraph(f"Recall: {recall_score(y_test, predictions):.2f}")
-        doc.add_paragraph(f"F1 Score: {f1_score(y_test, predictions):.2f}")
-        doc.add_paragraph(f"ROC AUC: {roc_auc:.2f}")
+        doc.add_heading('Métricas de rendimiento - IA ', level=1)
+        doc.add_paragraph("Las siguientes métricas representan el rendimiento del modelo de IA utilizado en la detección de anomalías financieras.")
+        doc.add_paragraph("Definiciones:")
+        doc.add_paragraph("Accuracy: Proporción de predicciones correctas.")
+        doc.add_paragraph("Precision: Proporción de predicciones positivas correctas.")
+        doc.add_paragraph("Recall: Proporción de verdaderos positivos detectados (anomalías).")
+        doc.add_paragraph("F1 Score: Media armónica de precision y recall.")
+        # Utilizar una tabla para mostrar las métricas
+        table = doc.add_table(rows=1, cols=2)
+        table.style = 'Table Grid'
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Métrica'
+        hdr_cells[1].text = 'Valor'
+        metrics = [
+             ("Accuracy", f"{accuracy_score(y_test, predictions):.2f}"),
+             ("Precision", f"{precision_score(y_test, predictions):.2f}"),
+             ("Recall", f"{recall_score(y_test, predictions):.2f}"),
+             ("F1 Score", f"{f1_score(y_test, predictions):.2f}"),
+             ("ROC AUC", f"{roc_auc:.2f}")
+        ]
+        
+        for metric, value in metrics:
+           row_cells = table.add_row().cells
+           row_cells[0].text = metric
+           row_cells[1].text = value
+                          
 
-        doc.add_heading('ROC Curve', level=1)
-        doc.add_picture('roc_curve.png', width=Inches(5))
+        #doc.add_heading('Curva de Característica Operativa del Receptor - IA', level=1)
+        #doc.add_picture('roc_curve.png', width=Inches(5))
+        #doc.add_paragraph("La curva ROC es una representación gráfica de la sensibilidad frente a la especificidad para un sistema clasificador binario en función de diferentes umbrales de decisión. Cuanto mayor sea el área bajo la curva (AUC), mejor será el rendimiento del modelo.")
 
         if len(combined_indices) > 0:
             anomalies = X_test.loc[combined_indices]
-            add_dataframe_to_doc(doc, anomalies, 'Possible anomalies detected')
+            warning_title = doc.add_heading("Observaciones")
+            warning_paragraph = doc.add_paragraph("El modelo ha identificado ciertas anomalías que requieren una investigación más profunda para entender sus causas y posibles implicaciones. Recomendamos que el personal auditor o la persona encargada realice una revisión detallada de los documentos y transacciones relacionadas para validar la exactitud de los datos y ajustar los registros financieros según sea necesario.")
+            warning_paragraph.runs[0].font.color.rgb = RGBColor(255, 0, 0)
+            warning_title.runs[0].font.color.rgb = RGBColor(255, 0, 0)
+            add_dataframe_to_doc(doc, anomalies, "Posibles anomalías detectadas")
         else:
-            doc.add_paragraph('No anomalies detected.')
-
-        doc.save("FraudShieldAI_financial_report.docx")
+            doc.add_paragraph('Ninguna anomalía fue detectada.')
+            
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        
+        sys.stdout.buffer.write(buffer.getvalue()) #reemplaza doc.save()
 
         print("Report generated successfully: financial_anomalies_report.docx", file=sys.stderr)
 
