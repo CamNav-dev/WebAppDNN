@@ -18,7 +18,7 @@ export default function Home() {
           </p>
           <div className="mt-8 space-x-4">
             <Link
-              to="/sign-up"
+              to="/signup"
               className="px-6 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-200 w-56"
             >
               Comenzar
@@ -133,7 +133,7 @@ export default function Home() {
                 <li> Exportación limitada de reportes</li>
               </ul>
 
-              <Link to="/sign-up"
+              <Link to="/signup"
                 className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-8 w-4/5"
               >
                 Comenzar
@@ -161,7 +161,7 @@ export default function Home() {
               </ul>
 
               <Link
-                to="/sign-up"
+                to="/signup"
                 className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-6 w-4/5"
               >
                 Comenzar
@@ -185,7 +185,7 @@ export default function Home() {
               </ul>
 
               <Link
-                to="/sign-up"
+                to="/signup"
                 className="px-8 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 mb-6 w-4/5"
               >
                 Comenzar

@@ -1,12 +1,14 @@
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
-import { errorHandler } from '../utils/error.js';
+import { errorHandler, createError } from '../utils/error.js';
 import jwt from 'jsonwebtoken';
-export const signup = async(req, res, next) =>{
-    const {username, email, password} = req.body;
-    {/* Password encypted */}
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export const signup = async (req, res, next) => {
+    const { username, email, password } = req.body;
     const hashPassword = bcrypt.hashSync(password, 10);
-    const newUser =  new User({
+    const newUser = new User({
         username,
         email,
         password: hashPassword,
@@ -14,18 +16,25 @@ export const signup = async(req, res, next) =>{
             number: '',
             expiry: '',
             cvv: ''
-        } 
+        }
     });
 
-    try{ 
-        await newUser.save();
-        res.status(200).json({message: 'User created successfully'});
-    }   catch(error){
+    try {
+        const savedUser = await newUser.save();
+        const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.status(200).json({
+            success: true,
+            message: 'User created successfully',
+            userId: savedUser._id,
+            token
+        });
+    } catch (error) {
         next(error);
     }
 };
 
-export const signin = async(req, res, next) => {
+export const signin = async (req, res, next) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
@@ -44,7 +53,7 @@ export const signin = async(req, res, next) => {
         res.status(200).json({
             success: true,
             user: userWithoutPassword,
-            token, 
+            token,
             expiresIn: 30 * 60 * 1000 // 30 minutes in milliseconds
         });
     } catch (error) {
@@ -109,3 +118,48 @@ export const updateUser = async (req, res, next) => {
     }
 };
 
+export const processPayment = async (req, res, next) => {
+    const { id } = req.params;
+    const { cardNumber, expiryDate, cvv } = req.body;
+
+    if (!cardNumber || !expiryDate || !cvv) {
+        return next(createError(400, 'All fields are required'));
+    }
+
+    try {
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            {
+                $set: {
+                    'creditCard.number': cardNumber,
+                    'creditCard.expiry': expiryDate,
+                    // Note: It's not recommended to store CVV
+                    hasPaid: true
+                },
+            },
+            { new: true }
+
+        );
+
+        if (!updatedUser) {
+            return next(createError(404, 'User not found'));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Payment processed successfully',
+            user: {
+                _id: updatedUser._id,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                hasPaid: updatedUser.hasPaid,
+                creditCard: {
+                    number: updatedUser.creditCard.number,
+                    expiry: updatedUser.creditCard.expiry,
+                }
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};

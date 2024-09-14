@@ -1,14 +1,24 @@
 import jwt from 'jsonwebtoken';
 
+export const createError = (status, message) => {
+  const err = new Error();
+  err.status = status;
+  err.message = message;
+  return err;
+};
+
+// Global Error Handler Middleware
 export const errorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
+  const statusCode = err.status || 500;
   const message = err.message || 'Internal Server Error';
-  return res.status(statusCode).json({
+  
+  res.status(statusCode).json({
     success: false,
-    statusCode,
-    message,
+    status: statusCode,
+    message: message,
   });
 };
+
 
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.access_token;
@@ -19,13 +29,6 @@ export const verifyToken = (req, res, next) => {
     req.user = user;
     next();
   });
-};
-
-export const createError = (status, message) => {
-  const err = new Error();
-  err.status = status;
-  err.message = message;
-  return err;
 };
 
 export const refreshTokenHandler = (req, res, next) => {

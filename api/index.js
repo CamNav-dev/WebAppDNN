@@ -8,6 +8,7 @@ import { errorHandler } from './utils/error.js';
 
 dotenv.config();
 
+
 const mongoURI = process.env.MONGO;
 mongoose.connect(mongoURI, {
   dbName: 'DNNWebAppDB', 
@@ -42,3 +43,4 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.use(errorHandler);

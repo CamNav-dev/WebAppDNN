@@ -1,13 +1,21 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch } from 'react-redux';
-import { Link, useNavigate } from "react-router-dom";
-
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 export default function Payment() {
   const [formData, setFormData] = useState({});
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false); // Añadido estado de carga
-  const dispatch = useDispatch();
-  const navigate = useNavigate(); // Añadido para redirigir
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { currentUser } = useSelector((state) => state.user);
+  const { id } = useParams(); // Get userId from URL
+  const { token } = useSelector((state) => state.user.currentUser);
+  
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/signin');
+    }
+  }, [currentUser, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -16,20 +24,20 @@ export default function Payment() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validación básica
     const { cardNumber, expiryDate, cvv, cardHolder } = formData;
     if (!cardNumber || !expiryDate || !cvv || !cardHolder) {
-      setError('Todos los campos son obligatorios.');
+      setError('All fields are required.');
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch("/api/auth/payment", {
+      const res = await fetch(`/api/auth/payment/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData),
       });
@@ -38,14 +46,14 @@ export default function Payment() {
       setLoading(false);
 
       if (data.success === false) {
-        setError('Error en el registro de la tarjeta.');
+        setError('Error in card registration.');
         return;
       }
 
-      navigate('/sign-in');
+      navigate('/dashboard');
     } catch (error) {
       setLoading(false);
-      setError('Hubo un problema al procesar la tarjeta. Por favor, inténtalo de nuevo.');
+      setError('There was a problem processing the card. Please try again.');
     }
   };
 

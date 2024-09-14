@@ -39,7 +39,7 @@ export default function App() {
            <Route path="/signin" element={<SignIn />} />
            <Route path="/signup" element={<SignUp />} />
            <Route path="/contact" element={<Contact />} />
-           <Route path="/payment" element={<Payment />} />
+           <Route path="/payment/:id" element={<Payment />} />
            {/* Protect the dashboard and profile routes with PrivateRoute */}
            <Route path="/dashboard" element={
              <PrivateRoute>

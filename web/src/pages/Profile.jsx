@@ -32,16 +32,16 @@ const countries = [
   "Perú",
   "USA",
   "UK",
-  "Canada",
+  "Canadá",
   "Australia",
-  "Germany",
-  "France",
-  "Japan",
+  "Alemania",
+  "Francia",
+  "Japón",
   "China",
   "India",
   "Brazil",
-  "Thailand",
-  "Other",
+  "Tailanda",
+  "Otro",
 ];
 
 function Profile() {
@@ -67,8 +67,8 @@ function Profile() {
     severity: "success",
   });
 
-  const [openDialog, setOpenDialog] = useState(false); // Estado del cuadro de diálogo
-
+  const [openDialog, setOpenDialog] = useState(false);
+  
   useEffect(() => {
     if (currentUser) {
       setFormData({

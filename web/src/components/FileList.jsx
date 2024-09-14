@@ -89,7 +89,7 @@ export default function FileList({
       await axios.put(
         "/api/files/update",
         { fileId: fileToRename._id, newFileName },
-        { headers: { Authorization: `Bearer ${currentUser.token}` } }
+        { headers: { Authorization: `Bearer ${token}` } } // Fix: Use `token`
       );
       if (typeof onFileUpdate === "function") {
         onFileUpdate();
@@ -100,11 +100,11 @@ export default function FileList({
       alert("Failed to update file name. Please try again.");
     }
   };
-
+  
   const handleDeleteFile = async (fileId) => {
     try {
       await axios.delete(`/api/files/delete/${fileId}`, {
-        headers: { Authorization: `Bearer ${currentUser.token}` },
+        headers: { Authorization: `Bearer ${token}` }, // Fix: Use `token`
       });
       if (typeof onFileUpdate === "function") {
         onFileUpdate();
@@ -115,7 +115,7 @@ export default function FileList({
     }
     handleMenuClose();
   };
-
+  
   const handleTestFile = async (fileId) => {
     setTestingFile(fileId);
     setTestResult(null);
@@ -123,7 +123,7 @@ export default function FileList({
       const response = await axios.post(
         `/api/files/test/${fileId}`,
         {},
-        { headers: { Authorization: `Bearer ${currentUser.token}` } }
+        { headers: { Authorization: `Bearer ${token}` } } // Fix: Use `token`
       );
       setTestResult(response.data);
     } catch (error) {
@@ -133,11 +133,11 @@ export default function FileList({
     setTestingFile(null);
     handleMenuClose();
   };
-
+  
   const handleDownload = async (documentId, fileName) => {
     try {
       const response = await axios.get(`/api/files/output/${documentId}`, {
-        headers: { Authorization: `Bearer ${currentUser.token}` },
+        headers: { Authorization: `Bearer ${token}` },
         responseType: "blob",
       });
 
