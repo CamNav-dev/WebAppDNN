@@ -1,26 +1,40 @@
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
-import { errorHandler } from '../utils/error.js';
+import { errorHandler, createError } from '../utils/error.js';
 import jwt from 'jsonwebtoken';
-export const signup = async(req, res, next) =>{
-    const {username, email, password} = req.body;
-    {/* Password encypted */}
+import Stripe from 'stripe';
+import CryptoJS from 'crypto-js';
+
+export const signup = async (req, res, next) => {
+    const { username, email, password } = req.body;
     const hashPassword = bcrypt.hashSync(password, 10);
-    const newUser =  new User({
+    const newUser = new User({
         username,
         email,
-        password: hashPassword
+        password: hashPassword,
+        creditCard: {
+            number: '',
+            expiry: '',
+            cvv: ''
+        }
     });
 
-    try{ 
-        await newUser.save();
-        res.status(200).json({message: 'User created successfully'});
-    }   catch(error){
+    try {
+        const savedUser = await newUser.save();
+        const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.status(200).json({
+            success: true,
+            message: 'User created successfully',
+            userId: savedUser._id,
+            token
+        });
+    } catch (error) {
         next(error);
     }
 };
 
-export const signin = async(req, res, next) => {
+export const signin = async (req, res, next) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
@@ -39,7 +53,7 @@ export const signin = async(req, res, next) => {
         res.status(200).json({
             success: true,
             user: userWithoutPassword,
-            token, 
+            token,
             expiresIn: 30 * 60 * 1000 // 30 minutes in milliseconds
         });
     } catch (error) {
@@ -68,29 +82,116 @@ export const deleteUser = async (req, res, next) => {
 // Update user
 export const updateUser = async (req, res, next) => {
     const { id } = req.params;
-    const { username, email, password } = req.body;
+    const { username, email, password, creditCard, role, country } = req.body;
 
     try {
-        // Fetch the user from the database
         let user = await User.findById(id);
 
         if (!user) return next(errorHandler(404, 'User not found'));
 
-        // Update the fields only if they are provided
+        // Update fields if provided
         if (username) user.username = username;
         if (email) user.email = email;
+        if (creditCard) user.creditCard = creditCard;
+        if (role) user.role = role;
+        if (country) user.country = country;
 
-        // Rehash the password if provided
+        // Handle password update
         if (password) {
-            const hashPassword = bcrypt.hashSync(password, 10);
-            user.password = hashPassword;
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password, salt);
         }
 
         // Save the updated user
-        await user.save();
+        const updatedUser = await user.save();
 
-        res.status(200).json({ message: 'User updated successfully' });
+        // Remove password from response
+        const userResponse = updatedUser.toObject();
+        delete userResponse.password;
+
+        res.status(200).json({
+            message: 'User updated successfully',
+            user: userResponse
+        });
     } catch (error) {
         next(error);
     }
 };
+
+export const processPayment = async (req, res, next) => {
+    const { id } = req.params;
+    const { cardNumber, expiryDate, cvv } = req.body;
+
+    if (!cardNumber || !expiryDate || !cvv) {
+        return next(createError(400, 'All fields are required'));
+    }
+
+    // Encriptar los datos de la tarjeta
+    const encryptedCardData = encryptCardData({
+        number: cardNumber,
+        expiry: expiryDate,
+        cvv: cvv,
+    });
+
+    try {
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            {
+                $set: {
+                    'creditCard.number': encryptedCardData.number,
+                    'creditCard.expiry': encryptedCardData.expiry,
+                    // No almacenar el CVV de forma insegura
+                    hasPaid: true
+                },
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return next(createError(404, 'User not found'));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Payment processed successfully',
+            user: {
+                _id: updatedUser._id,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                hasPaid: updatedUser.hasPaid,
+                creditCard: {
+                    number: '**** **** **** ' + updatedUser.creditCard.number.slice(-4), // Mostrar solo los últimos 4 dígitos
+                    expiry: updatedUser.creditCard.expiry,
+                }
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const secretKey = process.env.SECRET_KEY || 'your-secret-key';
+export const encryptCardData = (cardData) => {
+    const encryptedNumber = CryptoJS.AES.encrypt(cardData.number, secretKey).toString();
+    const encryptedExpiry = CryptoJS.AES.encrypt(cardData.expiry, secretKey).toString();
+    const encryptedCvv = CryptoJS.AES.encrypt(cardData.cvv, secretKey).toString();
+  
+    return {
+      number: encryptedNumber,
+      expiry: encryptedExpiry,
+      cvv: encryptedCvv, // No se recomienda almacenar el CVV, pero en caso de hacerlo, debe estar encriptado
+    };
+  };
+  
+  // Para desencriptar:
+  export const decryptCardData = (encryptedCardData) => {
+    const decryptedNumber = CryptoJS.AES.decrypt(encryptedCardData.number, secretKey).toString(CryptoJS.enc.Utf8);
+    const decryptedExpiry = CryptoJS.AES.decrypt(encryptedCardData.expiry, secretKey).toString(CryptoJS.enc.Utf8);
+    const decryptedCvv = CryptoJS.AES.decrypt(encryptedCardData.cvv, secretKey).toString(CryptoJS.enc.Utf8);
+  
+    return {
+      number: decryptedNumber,
+      expiry: decryptedExpiry,
+      cvv: decryptedCvv,
+    };
+  };

@@ -10,16 +10,19 @@ import {
   TableRow,
   Paper,
   IconButton,
-  Menu,
-  MenuItem,
-  TableSortLabel,
   Checkbox,
-  Button,
   CircularProgress,
   Alert,
   Snackbar,
+  Box,
+  TableSortLabel,
 } from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  PlayArrow as PlayArrowIcon,
+  GetApp as GetAppIcon,
+} from "@mui/icons-material";
 import RenameModal from "./RenameFile";
 
 export default function FileList({
@@ -36,29 +39,26 @@ export default function FileList({
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [fileToRename, setFileToRename] = useState(null);
   const [newFileName, setNewFileName] = useState("");
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [orderBy, setOrderBy] = useState("uploadDate");
   const [order, setOrder] = useState("desc");
   const [testingFile, setTestingFile] = useState(null);
-  const [testResult, setTestResult] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "info",
   });
-  console.log("FileList props:", { files, outputFiles, loading, error });
-
   useEffect(() => {
     setFiles(initialFiles);
     setOutputFiles(initialOutputFiles);
   }, [initialFiles, initialOutputFiles]);
 
-  const handleSort = (property) => {
+  const handleSort = (property, isOutputFiles = false) => {
     const isAsc = orderBy === property && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
+    const newOrder = isAsc ? "desc" : "asc";
+    setOrder(newOrder);
     setOrderBy(property);
-    const sortedFiles = [...files].sort((a, b) => {
+
+    const comparator = (a, b) => {
       if (property === "uploadDate") {
         return isAsc
           ? new Date(a[property]) - new Date(b[property])
@@ -67,8 +67,15 @@ export default function FileList({
       return isAsc
         ? a[property].localeCompare(b[property])
         : b[property].localeCompare(a[property]);
-    });
-    setFiles(sortedFiles);
+    };
+
+    if (isOutputFiles) {
+      const sortedOutputFiles = [...outputFiles].sort(comparator);
+      setOutputFiles(sortedOutputFiles);
+    } else {
+      const sortedFiles = [...files].sort(comparator);
+      setFiles(sortedFiles);
+    }
   };
 
   const closeRenameModal = () => {
@@ -81,44 +88,66 @@ export default function FileList({
     setFileToRename(file);
     setNewFileName(file.fileName);
     setIsRenameModalOpen(true);
-    handleMenuClose();
   };
 
   const handleRenameFile = async () => {
     try {
+      const endpoint = fileToRename.originalFile ? "/api/files/update-output" : "/api/files/update";
       await axios.put(
-        "/api/files/update",
+        endpoint,
         { fileId: fileToRename._id, newFileName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (typeof onFileUpdate === "function") {
         onFileUpdate();
       }
+      if (typeof onOutputFileUpdate === "function") {
+        onOutputFileUpdate();
+      }
       closeRenameModal();
+      setSnackbar({
+        open: true,
+        message: "File renamed successfully",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Error updating file name:", error);
-      alert("Failed to update file name. Please try again.");
+      setSnackbar({
+        open: true,
+        message: "Failed to rename file. Please try again.",
+        severity: "error",
+      });
     }
   };
 
-  const handleDeleteFile = async (fileId) => {
+  const handleDeleteFile = async (fileId, isOutputFile = false) => {
     try {
-      await axios.delete(`/api/files/delete/${fileId}`, {
+      const endpoint = isOutputFile ? `/api/files/delete-output/${fileId}` : `/api/files/delete/${fileId}`;
+      await axios.delete(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (typeof onFileUpdate === "function") {
         onFileUpdate();
       }
+      if (typeof onOutputFileUpdate === "function") {
+        onOutputFileUpdate();
+      }
+      setSnackbar({
+        open: true,
+        message: "File deleted successfully",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Error deleting file:", error);
-      alert("Failed to delete file. Please try again.");
+      setSnackbar({
+        open: true,
+        message: "Failed to delete file. Please try again.",
+        severity: "error",
+      });
     }
-    handleMenuClose();
   };
 
   const handleTestFile = async (fileId) => {
-    setTestingFile(fileId);
-    setTestResult(null);
     setTestingFile(fileId);
     setTestResult(null);
     try {
@@ -127,14 +156,23 @@ export default function FileList({
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setTestResult(response.data);
-      setTestResult(response.data);
+      if (typeof onOutputFileUpdate === "function") {
+        onOutputFileUpdate();
+      }
+      setSnackbar({
+        open: true,
+        message: "File tested successfully",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Error testing file:", error);
-      setTestResult({ error: "An error occurred while testing the file." });
+      setSnackbar({
+        open: true,
+        message: "An error occurred while testing the file.",
+        severity: "error",
+      });
     }
     setTestingFile(null);
-    handleMenuClose();
   };
 
   const handleDownload = async (documentId, fileName) => {
@@ -170,43 +208,24 @@ export default function FileList({
     }
   };
 
-  const handleMenuOpen = (event, file) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedFile(file);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedFile(null);
-  };
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <CircularProgress />;
+  if (error && error.response?.status === 403) {
+    return <Alert severity="error">You are not authorized to view these files. Please log in again.</Alert>;
+  }
+  if (error) return <Alert severity="error">{error.message}</Alert>;
 
   return (
-    <>
-      <TableContainer component={Paper}>
-        <h2>Uploaded Files</h2>
+    <Box sx={{ mb: 8 }}>
+      <TableContainer component={Paper} sx={{ mb: 4 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox />
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "fileName"}
-                  direction={orderBy === "fileName" ? order : "asc"}
-                  onClick={() => handleSort("fileName")}
-                >
-                  Name
-                </TableSortLabel>
-              </TableCell>
+              <TableCell>Name</TableCell>
               <TableCell>Owner</TableCell>
               <TableCell>
                 <TableSortLabel
                   active={orderBy === "uploadDate"}
-                  direction={orderBy === "uploadDate" ? order : "asc"}
+                  direction={order}
                   onClick={() => handleSort("uploadDate")}
                 >
                   Upload Date
@@ -218,17 +237,20 @@ export default function FileList({
           <TableBody>
             {files.map((file) => (
               <TableRow key={file._id}>
-                <TableCell padding="checkbox">
-                  <Checkbox />
-                </TableCell>
                 <TableCell>{file.fileName}</TableCell>
                 <TableCell>{file.uploadedBy.username}</TableCell>
                 <TableCell>
                   {new Date(file.uploadDate).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={(event) => handleMenuOpen(event, file)}>
-                    <MoreVertIcon />
+                  <IconButton onClick={() => openRenameModal(file)} color="secondary">
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton onClick={() => handleDeleteFile(file._id)} color="error">
+                    <DeleteIcon />
+                  </IconButton>
+                  <IconButton onClick={() => handleTestFile(file._id)} color="primary">
+                    <PlayArrowIcon />
                   </IconButton>
                   {testingFile === file._id && <CircularProgress size={24} />}
                 </TableCell>
@@ -238,14 +260,21 @@ export default function FileList({
         </Table>
       </TableContainer>
 
-      <TableContainer component={Paper} style={{ marginTop: "2rem" }}>
-        <h2>Output Files</h2>
+      <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Original File</TableCell>
-              <TableCell>Upload Date</TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === "uploadDate"}
+                  direction={order}
+                  onClick={() => handleSort("uploadDate", true)}
+                >
+                  Upload Date
+                </TableSortLabel>
+              </TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -258,35 +287,22 @@ export default function FileList({
                   {new Date(outputFile.uploadDate).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    onClick={() =>
-                      handleDownload(outputFile._id, outputFile.fileName)
-                    }
-                  >
-                    Download
-                  </Button>
+                  <IconButton onClick={() => handleDownload(outputFile._id, outputFile.fileName)} color="primary">
+                    <GetAppIcon />
+                  </IconButton>
+                  <IconButton onClick={() => openRenameModal(outputFile)} color="secondary">
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton onClick={() => handleDeleteFile(outputFile._id, true)} color="error">
+                    <DeleteIcon />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={() => openRenameModal(selectedFile)}>
-          Rename
-        </MenuItem>
-        <MenuItem onClick={() => handleDeleteFile(selectedFile?._id)}>
-          Delete
-        </MenuItem>
-        <MenuItem onClick={() => handleTestFile(selectedFile?._id)}>
-          Test
-        </MenuItem>
-      </Menu>
+      
       <RenameModal
         isOpen={isRenameModalOpen}
         onClose={closeRenameModal}
@@ -294,6 +310,7 @@ export default function FileList({
         fileName={newFileName}
         setFileName={setNewFileName}
       />
+      
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -303,6 +320,6 @@ export default function FileList({
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   );
 }

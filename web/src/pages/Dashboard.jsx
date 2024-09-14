@@ -1,54 +1,87 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import FileUpload from "../components/RenameModal";
 import FileList from "../components/FileList";
-import axios from "axios";
-import { useSelector } from "react-redux";
+import { signOut } from "../redux/user/userSlice";
+import { refreshToken } from "../utils/authUtils";
 
 export default function Dashboard() {
   const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [files, setFiles] = useState([]);
   const [outputFiles, setOutputFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchFiles();
-    fetchOutputFiles();
-  }, [currentUser.token]);
-
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.get("/api/files/files", {
-        headers: { Authorization: `Bearer ${currentUser.token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`
+        },
       });
       console.log("Files fetched:", response.data);
       setFiles(response.data);
     } catch (error) {
       console.error("Error fetching files:", error);
-      setError(error);
+      handleApiError(error);
     }
     setLoading(false);
-  };
+  }, []);
 
-  const fetchOutputFiles = async () => {
+  const fetchOutputFiles = useCallback(async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.get("/api/files/output-files", {
-        headers: { Authorization: `Bearer ${currentUser.token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Output files fetched:", response.data);
       setOutputFiles(response.data);
     } catch (error) {
       console.error("Error fetching output files:", error);
-      setError(error);
+      handleApiError(error);
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error("No token available.");
+      setError("No token available.");
+      navigate("/signin");
+    } else {
+      fetchFiles();
+      fetchOutputFiles();
+    }
+  }, [navigate, fetchFiles, fetchOutputFiles]);
+
+  const handleApiError = async (error) => {
+    if (error.response && error.response.status === 401) {
+      try {
+        await refreshToken();
+        fetchFiles();
+        fetchOutputFiles();
+      } catch (refreshError) {
+        console.error("Error refreshing token:", refreshError);
+        dispatch(signOut());
+        navigate("/signin");
+      }
+    } else {
+      setError(error.message || "An error occurred");
+    }
   };
 
   const callBackUploadedFile = () => {
     fetchFiles();
+    fetchOutputFiles();
   }
 
   return (
@@ -67,9 +100,6 @@ export default function Dashboard() {
               )}
             </div>
             
-            <div className="mb-4">
-              
-            </div>
             <div className="mt-16">
               <FileUpload callback={callBackUploadedFile} />
             </div>
@@ -89,15 +119,9 @@ export default function Dashboard() {
         <div className="container text-center my-3">
           <p>&copy; 2024 FraudDetect Inc. All rights reserved.</p>
           <div className="flex justify-center space-x-6 mt-4">
-            <a href="#" className="hover:text-blue-300">
-              Twitter
-            </a>
-            <a href="#" className="hover:text-blue-300">
-              LinkedIn
-            </a>
-            <a href="#" className="hover:text-blue-300">
-              Contact Us
-            </a>
+            <a href="#" className="hover:text-blue-300">Twitter</a>
+            <a href="#" className="hover:text-blue-300">LinkedIn</a>
+            <a href="#" className="hover:text-blue-300">Contact Us</a>
           </div>
         </div>
       </footer>

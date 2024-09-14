@@ -4,11 +4,12 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import authRoutes from './routes/auth.route.js';
 import fileRoutes from './routes/upload.route.js'; // Import the file routes
+import { errorHandler } from './utils/error.js';
 
 dotenv.config();
 
-const mongoURI = process.env.MONGO;
 
+const mongoURI = process.env.MONGO;
 mongoose.connect(mongoURI, {
   dbName: 'DNNWebAppDB', 
 })
@@ -42,3 +43,4 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.use(errorHandler);

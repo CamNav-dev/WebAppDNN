@@ -40,7 +40,7 @@ function Header() {
           </Typography>
           <Button color="inherit" component={Link} to="/">Inicio</Button>
           <Button color="inherit" component={Link} to="/about">Nosotras</Button>
-          <Button color="inherit" component={Link} to="/">Contáctanos</Button>
+          <Button color="inherit" component={Link} to="/contact">Contáctanos</Button>
           
           {currentUser ? (
             <>
@@ -52,7 +52,7 @@ function Header() {
                 onClick={handleMenu}
                 color="inherit"
               >
-                <Avatar>{currentUser.username[0]}</Avatar>
+                <Avatar>{currentUser.username}</Avatar>
               </IconButton>
               <Menu
                 id="menu-appbar"
@@ -75,7 +75,7 @@ function Header() {
               </Menu>
             </>
           ) : (
-            <Button color="inherit" component={Link} to="/sign-in">Mi cuenta</Button>
+            <Button color="inherit" component={Link} to="/signin">Mi cuenta</Button>
           )}
         </Toolbar>
       </AppBar>

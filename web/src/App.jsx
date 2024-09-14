@@ -11,25 +11,51 @@ import About from './pages/About';
 import Dashboard from './pages/Dashboard';
 import Header from './components/Header';
 import PrivateRoute from './components/PrivateRoute';
-
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { updateToken } from '../src/redux/user/userSlice.js';
+import Contact from './pages/Contact';
+import Payment from './pages/Payment';
+import PaymentConfirmation from './components/PaymentConfirmation.jsx';
 export default function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      dispatch(updateToken(token));
+    }
+  }, [dispatch]);
+
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <BrowserRouter>
-          <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/sign-in" element={<SignIn />} />
-            <Route path="/sign-up" element={<SignUp />} />
-            <Route element={<PrivateRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </PersistGate>
-    </Provider>
+     // Pass the store prop to Provider
+     <Provider store={store}>
+     {/* Pass the persistor prop to PersistGate */}
+     <PersistGate loading={null} persistor={persistor}>
+       <BrowserRouter>
+         <Header />
+         <Routes>
+           <Route path="/" element={<Home />} />
+           <Route path="/about" element={<About />} />
+           <Route path="/signin" element={<SignIn />} />
+           <Route path="/signup" element={<SignUp />} />
+           <Route path="/contact" element={<Contact />} />
+           <Route path="/payment/:id" element={<Payment />} />
+           <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
+           {/* Protect the dashboard and profile routes with PrivateRoute */}
+           <Route path="/dashboard" element={
+             <PrivateRoute>
+               <Dashboard />
+             </PrivateRoute>
+           } />
+           <Route path="/profile" element={
+             <PrivateRoute>
+               <Profile />
+             </PrivateRoute>
+           } />
+         </Routes>
+       </BrowserRouter>
+     </PersistGate>
+   </Provider>
   );
 }

@@ -1,4 +1,6 @@
 import React from "react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Home() {
   return (
@@ -15,12 +17,15 @@ export default function Home() {
             fortalecer la confianza de sus clientes
           </p>
           <div className="mt-8 space-x-4">
-            <button className="px-6 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-200 w-56">
+            <Link
+              to="/signup"
+              className="px-6 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-200 w-56"
+            >
               Comenzar
-            </button>
-            <button className="px-6 py-3 bg-transparent border border-white text-white rounded-full font-semibold hover:bg-blue-700 w-56">
+            </Link>
+            <Link to ="/contact" className="px-6 py-3 bg-transparent border border-white text-white rounded-full font-semibold hover:bg-blue-700 w-56">
               Contáctanos
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -96,7 +101,8 @@ export default function Home() {
             </p>
             <p className="text-gray-600">
               Nuestra tecnología avanzada te permite identificar patrones y
-              detectar posibles amenazas antes de que se conviertan en problemas&quot;
+              detectar posibles amenazas antes de que se conviertan en
+              problemas&quot;
             </p>
           </div>
         </div>
@@ -120,14 +126,18 @@ export default function Home() {
               <p className="text-lg mb-6">
                 Ideal para negocios emergentes y autónomos
               </p>
-              <button className="px-8 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 mb-6 w-4/5">
-                Comenzar
-              </button>
-              <ul className="text-left space-y-3">
+              
+              <ul className="text-left space-y-3 mb-7">
                 <li> Sube hasta 2 estados financieros cada 6 meses</li>
                 <li> Acceso a reportes inmediatos semestrales</li>
                 <li> Exportación limitada de reportes</li>
               </ul>
+
+              <Link to="/signup"
+                className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-8 w-4/5"
+              >
+                Comenzar
+              </Link>
             </div>
 
             <div className="bg-blue-600 text-white p-8 rounded-xl shadow-lg w-full max-w-sm transform lg:scale-105">
@@ -139,10 +149,8 @@ export default function Home() {
                 Perfecto para empresas en crecimiento con necesidades
                 financieras más complejas.
               </p>
-              <button className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-6 w-4/5">
-                Comenzar
-              </button>
-              <ul className="text-left space-y-3">
+              
+              <ul className="text-left space-y-3 mb-7">
                 <li>
                   Permite subir hasta 5 estados financieros cada trimestre
                 </li>
@@ -151,94 +159,108 @@ export default function Home() {
                 </li>
                 <li>Exportación de hasta 10 reportes</li>
               </ul>
+
+              <Link
+                to="/signup"
+                className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-6 w-4/5"
+              >
+                Comenzar
+              </Link>
             </div>
 
             <div className="bg-gray-800 text-white p-8 rounded-xl shadow-lg w-full max-w-sm">
               <h3 className="text-2xl font-semibold mb-4">
-                Plan Grande Empresa 
+                Plan Grande Empresa
               </h3>
               <p className="text-5xl font-bold mb-4">S/.185/mes</p>
               <p className="text-lg mb-6">
                 Diseñado para grandes corporaciones que requieren una gestión
                 financiera integral.
               </p>
-              <button className="px-8 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 mb-6 w-4/5">
-                Comenzar
-              </button>
-              <ul className="text-left space-y-3">
+              
+              <ul className="text-left space-y-3 mb-7">
                 <li>Subida ilimitada de estados financieros.</li>
                 <li>Reportes inmediatos por cada archivo subido</li>
                 <li>Exportación ilimitada de reportes</li>
               </ul>
+
+              <Link
+                to="/signup"
+                className="px-8 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 mb-6 w-4/5"
+              >
+                Comenzar
+              </Link>
             </div>
           </div>
         </div>
       </section>
-
       <section id="testimonials" className="bg-gray-100 py-20">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-800 mb-14">
-          La herramienta de confianza del Perú
+            La herramienta de confianza del Perú
           </h2>
           <div className="grid md:grid-cols-3 gap-8 px-12">
             <div className="p-6 bg-white rounded-lg shadow-lg">
               <p>
-              &quot; La herramienta de FraudShieldAI, nos permite optimizar tiempo
-                en nuestro control de estados financieros y mantener la salud de
-                nuestra empresa.&quot;
+                &quot; La herramienta de FraudShieldAI, nos permite optimizar
+                tiempo en nuestro control de estados financieros y mantener la
+                salud de nuestra empresa.&quot;
               </p>
               <p className="mt-4 text-blue-600 font-semibold">- PECSA -</p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-lg">
               <p>
-              &quot; FraudShieldAI nos ha permitido prevenir discrepancias
+                &quot; FraudShieldAI nos ha permitido prevenir discrepancias
                 financieras y grandes pérdidas. Es una herramienta indispensable
                 en nuestra gestión financiera&quot;
               </p>
-              <p className="mt-4 text-blue-600 font-semibold">- Grupo Andrade -</p>
+              <p className="mt-4 text-blue-600 font-semibold">
+                - Grupo Andrade -
+              </p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-lg">
               <p>
-              &quot; El sistema es amigable y fácil de usar. Nos ha permitido
+                &quot; El sistema es amigable y fácil de usar. Nos ha permitido
                 mantener un control detallado de nuestras finanzas y tomar
                 decisiones informadas.&quot;
               </p>
               <p className="mt-4 text-blue-600 font-semibold">- GlobalT -</p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-lg">
-              <p>
-                &quot;La herramienta es muy intuitiva y rápida&quot;
+              <p>&quot;La herramienta es muy intuitiva y rápida&quot;</p>
+              <p className="mt-4 text-blue-600 font-semibold">
+                - Agroindustria VerdeSol -
               </p>
-              <p className="mt-4 text-blue-600 font-semibold">- Agroindustria VerdeSol -</p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-lg">
               <p>
-              &quot; Reducimos los tiempos de auditoría a la mitad gracias a la
-                detección automatizada de posibles irregularidades financieras
-                que nos ofrece FraudShieldAI&quot;
+                &quot; Reducimos los tiempos de auditoría a la mitad gracias a
+                la detección automatizada de posibles irregularidades
+                financieras que nos ofrece FraudShieldAI&quot;
               </p>
               <p className="mt-4 text-blue-600 font-semibold">- Banco Solar-</p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-lg">
               <p>
-              &quot; Nuestra auditoría financiera anual fue mucho más eficiente
-                gracias a las funciones automatizadas de detección de riesgos
-                que ofrece FraudShieldAI. &quot;
+                &quot; Nuestra auditoría financiera anual fue mucho más
+                eficiente gracias a las funciones automatizadas de detección de
+                riesgos que ofrece FraudShieldAI. &quot;
               </p>
-              <p className="mt-4 text-blue-600 font-semibold">- SunriseTech -</p>
+              <p className="mt-4 text-blue-600 font-semibold">
+                - SunriseTech -
+              </p>
             </div>
           </div>
         </div>
       </section>
-
       <section id="faq" className="bg-gray-100 py-20">
         <div className="container mx-auto px-20 my-3">
           <h2 className="text-3xl font-bold text-left mb-8 text-gray-800">
             Preguntas Frecuentes
           </h2>
           <p className="text-lg mb-12">
-          Encuentra respuestas a las preguntas más comunes sobre FraudShieldAI
-          y cómo puede ayudarte a mejorar la gestión financiera de tu empresa.
+            Encuentra respuestas a las preguntas más comunes sobre FraudShieldAI
+            y cómo puede ayudarte a mejorar la gestión financiera de tu empresa.
           </p>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="">
@@ -246,14 +268,14 @@ export default function Home() {
                 ¿Cómo funciona la detección de fraude?
               </h3>
               <p className="text-justify pr-8">
-                Nuestro sistema utiliza un algoritmo de inteligencia artificial y
-                aprendizaje automático para analizar tus datos financieros,
+                Nuestro sistema utiliza un algoritmo de inteligencia artificial
+                y aprendizaje automático para analizar tus datos financieros,
                 detectando patrones inusuales y posibles anomalías.
               </p>
             </div>
             <div className="">
               <h3 className="font-semibold mb-4 pr-8">
-              ¿Puedo actualizar mi plan más tarde?
+                ¿Puedo actualizar mi plan más tarde?
               </h3>
               <p className="text-justify pr-8">
                 Sí, puedes actualizar o cambiar tu plan en cualquier momento
@@ -263,7 +285,7 @@ export default function Home() {
             </div>
             <div className="">
               <h3 className="font-semibold mb-4 pr-8">
-              ¿Hay una prueba gratuita disponible?
+                ¿Hay una prueba gratuita disponible?
               </h3>
               <p className="text-justify pr-8">
                 Sí, ofrecemos una prueba gratuita de 14 días para que puedas
@@ -273,7 +295,7 @@ export default function Home() {
             </div>
             <div className="s">
               <h3 className="font-semibold mb-4 pr-8">
-              ¿FraudShieldAI cumple con las normativas locales?
+                ¿FraudShieldAI cumple con las normativas locales?
               </h3>
               <p className="text-justify pr-8">
                 Sí, nuestra plataforma está diseñada para cumplir con todas las
@@ -292,13 +314,14 @@ export default function Home() {
               </p>
             </div>
             <div className="s">
-              <h3 className="font-semibold mb-4 pr-8">¿Cómo se maneja la información una vez cargada en la plataforma?
+              <h3 className="font-semibold mb-4 pr-8">
+                ¿Cómo se maneja la información una vez cargada en la plataforma?
               </h3>
               <p className="text-justify pr-8">
                 Una vez que subes tus archivos a FraudShieldAI, nuestro
-                algoritmo procesa y analiza los datos de forma segura. Solo
-                tú tendrás acceso a los reportes generados, y puedes eliminarlos
-                en cualquier momento.
+                algoritmo procesa y analiza los datos de forma segura. Solo tú
+                tendrás acceso a los reportes generados, y puedes eliminarlos en
+                cualquier momento.
               </p>
             </div>
           </div>
@@ -308,15 +331,25 @@ export default function Home() {
         <div className="container text-center my-3">
           <p>&copy; 2024 FraudDetect Inc. All rights reserved.</p>
           <div className="flex justify-center space-x-6 mt-4">
-            <a href="#" className="hover:text-blue-300">
+            <a
+              href="https://x.com/i/flow/login?input_flow_data=%7B%22requested_variant%22%3A%22eyJteCI6IjIifQ%3D%3D%22%7D"
+              className="hover:text-blue-300"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Twitter
             </a>
-            <a href="#" className="hover:text-blue-300">
+            <a
+              href="https://www.linkedin.com/home"
+              className="hover:text-blue-300"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               LinkedIn
             </a>
-            <a href="#" className="hover:text-blue-300">
+            <Link to="/contact" href="#" className="hover:text-blue-300">
               Contact Us
-            </a>
+            </Link>
           </div>
         </div>
       </footer>

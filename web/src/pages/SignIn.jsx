@@ -22,6 +22,7 @@ export default function SignIn() {
     e.preventDefault();
     try {
       dispatch(signInStart());
+  
       const res = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: {
@@ -29,37 +30,35 @@ export default function SignIn() {
         },
         body: JSON.stringify(formData),
       });
+  
       const data = await res.json();
+  
       if (!res.ok) {
         throw new Error(data.message || 'Failed to sign in');
       }
-
+  
       dispatch(signInSuccess({
         ...data.user,
         token: data.token,
       }));
-      
+  
       // Store token in local storage
       localStorage.setItem('token', data.token);
       localStorage.setItem('tokenExpiration', new Date().getTime() + data.expiresIn);
-
-      // Schedule signout
-      setTimeout(() => {
-        dispatch(signOut());
-        localStorage.removeItem('token');
-        localStorage.removeItem('tokenExpiration');
-        navigate('/signin');
-      }, data.expiresIn);
-
-      navigate('/dashboard');
+  
+      // Redirect to dashboard after token is stored
+      navigate('/dashboard');  // Ensuring the redirect happens after token handling
+  
     } catch (error) {
       dispatch(signInFailure({ message: error.message }));
     }
   };
+  
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const expiration = localStorage.getItem('tokenExpiration');
+  
     if (token && expiration) {
       const remainingTime = parseInt(expiration) - new Date().getTime();
       if (remainingTime > 0) {
@@ -69,13 +68,13 @@ export default function SignIn() {
           localStorage.removeItem('tokenExpiration');
           navigate('/signin');
         }, remainingTime);
-      } else {
-        dispatch(signOut());
-        localStorage.removeItem('token');
-        localStorage.removeItem('tokenExpiration');
       }
+    } else {
+      dispatch(signOut());
+      navigate('/signin'); // Ensure user gets redirected if no valid token
     }
   }, [dispatch, navigate]);
+  
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -124,7 +123,7 @@ export default function SignIn() {
           </div>
           <div className=" mt-4 text-center text-gray-500">
             ¿Todavía no tienes una cuenta?
-            <Link to="/sign-up" className="text-orange-500 font-bold ml-4">
+            <Link to="/signup" className="text-orange-500 font-bold ml-4">
               Registrar usuario
             </Link>
           </div>
