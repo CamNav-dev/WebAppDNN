@@ -219,3 +219,42 @@ export const getOutputFiles = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+export const updateOutputFileName = async (req, res) => {
+  const { fileId, newFileName } = req.body;
+
+  try {
+    const file = await OutputDocument.findById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'Output file not found' });
+    }
+
+    file.fileName = newFileName;
+    await file.save();
+
+    return res.status(200).json({ message: 'Output file name updated successfully', file });
+  } catch (error) {
+    console.error('Error updating output file name:', error);
+    return res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const deleteOutputFile = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+
+    const file = await OutputDocument.findById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'Output file not found' });
+    }
+
+    await file.deleteOne();
+
+    return res.status(200).json({ message: 'Output file deleted successfully' });
+  } catch (error) {
+    console.error('Error in deleteOutputFile controller:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
