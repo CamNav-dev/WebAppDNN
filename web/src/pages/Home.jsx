@@ -126,17 +126,18 @@ export default function Home() {
               <p className="text-lg mb-6">
                 Ideal para negocios emergentes y autónomos
               </p>
-              <Link
-                to="/sign-up"
-                className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-8 w-4/5"
-              >
-                Comenzar
-              </Link>
-              <ul className="text-left space-y-3">
+              
+              <ul className="text-left space-y-3 mb-7">
                 <li> Sube hasta 2 estados financieros cada 6 meses</li>
                 <li> Acceso a reportes inmediatos semestrales</li>
                 <li> Exportación limitada de reportes</li>
               </ul>
+
+              <Link to="/sign-up"
+                className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-8 w-4/5"
+              >
+                Comenzar
+              </Link>
             </div>
 
             <div className="bg-blue-600 text-white p-8 rounded-xl shadow-lg w-full max-w-sm transform lg:scale-105">
@@ -148,13 +149,8 @@ export default function Home() {
                 Perfecto para empresas en crecimiento con necesidades
                 financieras más complejas.
               </p>
-              <Link
-                to="/sign-up"
-                className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-6 w-4/5"
-              >
-                Comenzar
-              </Link>
-              <ul className="text-left space-y-3">
+              
+              <ul className="text-left space-y-3 mb-7">
                 <li>
                   Permite subir hasta 5 estados financieros cada trimestre
                 </li>
@@ -163,6 +159,13 @@ export default function Home() {
                 </li>
                 <li>Exportación de hasta 10 reportes</li>
               </ul>
+
+              <Link
+                to="/sign-up"
+                className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition duration-300 mb-6 w-4/5"
+              >
+                Comenzar
+              </Link>
             </div>
 
             <div className="bg-gray-800 text-white p-8 rounded-xl shadow-lg w-full max-w-sm">
@@ -174,17 +177,19 @@ export default function Home() {
                 Diseñado para grandes corporaciones que requieren una gestión
                 financiera integral.
               </p>
+              
+              <ul className="text-left space-y-3 mb-7">
+                <li>Subida ilimitada de estados financieros.</li>
+                <li>Reportes inmediatos por cada archivo subido</li>
+                <li>Exportación ilimitada de reportes</li>
+              </ul>
+
               <Link
                 to="/sign-up"
                 className="px-8 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 mb-6 w-4/5"
               >
                 Comenzar
               </Link>
-              <ul className="text-left space-y-3">
-                <li>Subida ilimitada de estados financieros.</li>
-                <li>Reportes inmediatos por cada archivo subido</li>
-                <li>Exportación ilimitada de reportes</li>
-              </ul>
             </div>
           </div>
         </div>
