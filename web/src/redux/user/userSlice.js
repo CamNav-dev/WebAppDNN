@@ -15,16 +15,21 @@ const userSlice = createSlice({
       state.error = false;
     },
     signInSuccess: (state, action) => {
-      state.currentUser = {
-        ...action.payload, // Ensure payload contains token
-        token: action.payload.token,
-      };
+      state.currentUser = action.payload;  // Store the full payload
       state.loading = false;
       state.error = false;
+      localStorage.setItem('token', action.payload.token); // Ensure the token is saved
     },
     signInFailure: (state, action) => {
       state.loading = false;
       state.error = action.payload;
+    },
+    signOut: (state) => {
+      state.currentUser = null;
+      state.loading = false;
+      state.error = false;
+      // Eliminar el token de localStorage al cerrar sesión
+      localStorage.removeItem('token');
     },
     
     // Update User actions
@@ -54,10 +59,10 @@ const userSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
-    signOut: (state) => {
-      state.currentUser = null;
-      state.loading = false;
-      state.error = false;
+    updateToken: (state, action) => {
+      if (state.currentUser) {
+        state.currentUser.token = action.payload;
+      }
     },
   },
 });
@@ -73,6 +78,7 @@ export const {
   deleteUserStart,
   deleteUserSuccess,
   signOut,
+  updateToken,
 } = userSlice.actions;
 
 export default userSlice.reducer;

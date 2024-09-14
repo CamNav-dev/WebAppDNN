@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   TextField,
@@ -12,11 +13,19 @@ import {
   Paper,
   Snackbar,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import {
   updateUserStart,
   updateUserSuccess,
   updateUserFailure,
+  deleteUserStart,
+  deleteUserSuccess,
+  deleteUserFailure,
 } from "../redux/user/userSlice";
 
 const countries = [
@@ -37,9 +46,9 @@ const countries = [
 
 function Profile() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();  // Para redirigir después de la eliminación
   const { currentUser } = useSelector((state) => state.user);
 
-  // Estado local para manejar los datos del formulario
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -58,11 +67,10 @@ function Profile() {
     severity: "success",
   });
 
-  // Sincronizar los datos del usuario en el formulario cada vez que `currentUser` cambie
+  const [openDialog, setOpenDialog] = useState(false); // Estado del cuadro de diálogo
+
   useEffect(() => {
-    console.log("useEffect - currentUser:", currentUser);
     if (currentUser) {
-      console.log("Usuario actualizado en useEffect:", currentUser); // Verifica el estado
       setFormData({
         username: currentUser.username || "",
         email: currentUser.email || "",
@@ -109,13 +117,8 @@ function Profile() {
 
     try {
       dispatch(updateUserStart());
-      const response = await axios.put(
-        `/api/auth/update/${currentUser._id}`,
-        formData
-      );
-      console.log("Datos actualizados del servidor:", response.data); // Esto debería mostrar los datos actualizados
-      dispatch(updateUserSuccess(response.data.user)); // Asegúrate de que `response.data.user` contenga los datos del usuario
-
+      const response = await axios.put(`/api/auth/update/${currentUser._id}`, formData);
+      dispatch(updateUserSuccess(response.data.user));
       setEditMode(false);
       setSnackbar({
         open: true,
@@ -123,12 +126,7 @@ function Profile() {
         severity: "success",
       });
     } catch (error) {
-      console.error("Error al actualizar el usuario:", error);
-      dispatch(
-        updateUserFailure(
-          error.response?.data?.message || "Failed to update user"
-        )
-      );
+      dispatch(updateUserFailure(error.response?.data?.message || "Error al actualizar el usuario"));
       setSnackbar({
         open: true,
         message: "Error al actualizar el usuario",
@@ -137,22 +135,35 @@ function Profile() {
     }
   };
 
-  const handleCancel = () => {
-    setEditMode(false);
-    if (currentUser) {
-      setFormData({
-        username: currentUser.username || "",
-        email: currentUser.email || "",
-        country: countries.includes(currentUser.country)
-          ? currentUser.country
-          : "Other",
-        creditCard: {
-          number: currentUser.creditCard?.number || "",
-          expiry: currentUser.creditCard?.expiry || "",
-          cvv: currentUser.creditCard?.cvv || "",
-        },
+  const handleDeleteUser = async () => {
+    try {
+      dispatch(deleteUserStart());
+      await axios.delete(`/api/auth/delete/${currentUser._id}`);
+      dispatch(deleteUserSuccess());
+      setSnackbar({
+        open: true,
+        message: "Usuario eliminado correctamente",
+        severity: "success",
+      });
+      setTimeout(() => {
+        navigate("/");  // Redirigir a la página principal después de eliminar
+      }, 2000);
+    } catch (error) {
+      dispatch(deleteUserFailure(error.response?.data?.message || "Error al eliminar el usuario"));
+      setSnackbar({
+        open: true,
+        message: "Error al eliminar el usuario",
+        severity: "error",
       });
     }
+  };
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
   };
 
   const handleCloseSnackbar = (event, reason) => {
@@ -188,7 +199,6 @@ function Profile() {
             label="Email"
             name="email"
             value={formData.email}
-            onChange={handleInputChange}
             fullWidth
             disabled
             sx={{ mb: 2 }}
@@ -243,10 +253,10 @@ function Profile() {
           />
         </Grid>
       </Grid>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
         {editMode ? (
           <>
-            <Button onClick={handleCancel} sx={{ mr: 2 }}>
+            <Button onClick={() => setEditMode(false)} sx={{ mr: 2 }}>
               Cancelar
             </Button>
             <Button variant="contained" onClick={handleSubmit}>
@@ -254,11 +264,35 @@ function Profile() {
             </Button>
           </>
         ) : (
-          <Button variant="contained" onClick={() => setEditMode(true)}>
-            Editar Perfil
-          </Button>
+          <>
+            <Button variant="contained" onClick={() => setEditMode(true)} sx={{ mr: 2 }}>
+              Editar Perfil
+            </Button>
+            <Button variant="outlined" color="error" onClick={handleOpenDialog}>
+              Eliminar Cuenta
+            </Button>
+          </>
         )}
       </Box>
+
+      {/* Cuadro de diálogo para confirmar eliminación */}
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>{"¿Eliminar permanentemente?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Estás a punto de eliminar tu cuenta. Esta acción es irreversible. ¿Estás seguro de que deseas continuar?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            No, regresar
+          </Button>
+          <Button onClick={handleDeleteUser} color="error">
+            Sí, eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

@@ -75,7 +75,7 @@ function Header() {
               </Menu>
             </>
           ) : (
-            <Button color="inherit" component={Link} to="/sign-in">Mi cuenta</Button>
+            <Button color="inherit" component={Link} to="/signin">Mi cuenta</Button>
           )}
         </Toolbar>
       </AppBar>

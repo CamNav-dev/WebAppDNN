@@ -29,7 +29,7 @@ const handleSubmit = async (e) => {
       setError(true);
       return;
     }
-    navigate('/sign-in');
+    navigate('/signin');
   } catch (error) {
     setLoading(false);
     setError(true);
@@ -105,7 +105,7 @@ const handleSubmit = async (e) => {
           </div>
           <div className=" mt-4 text-center text-gray-500">
             ¿Ya tienes una cuenta?
-            <Link to="/sign-in" className="text-orange-500 font-bold ml-4">
+            <Link to="/signin" className="text-orange-500 font-bold ml-4">
               Iniciar sesión
             </Link>
           </div>

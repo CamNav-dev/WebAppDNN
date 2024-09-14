@@ -216,7 +216,7 @@ export const getOutputDocument = async (req, res) => {
     if (!outputDocument) {
       return res.status(404).json({ message: 'Output document not found' });
     }
-
+    
     // Set a default Content-Type if it's not available in the document
     const contentType = outputDocument.fileType || 'application/octet-stream';
 

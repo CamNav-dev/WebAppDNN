@@ -89,7 +89,7 @@ export default function FileList({
       await axios.put(
         "/api/files/update",
         { fileId: fileToRename._id, newFileName },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${currentUser.token}` } }
       );
       if (typeof onFileUpdate === "function") {
         onFileUpdate();
@@ -104,7 +104,7 @@ export default function FileList({
   const handleDeleteFile = async (fileId) => {
     try {
       await axios.delete(`/api/files/delete/${fileId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${currentUser.token}` },
       });
       if (typeof onFileUpdate === "function") {
         onFileUpdate();
@@ -123,7 +123,7 @@ export default function FileList({
       const response = await axios.post(
         `/api/files/test/${fileId}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${currentUser.token}` } }
       );
       setTestResult(response.data);
     } catch (error) {
@@ -137,7 +137,7 @@ export default function FileList({
   const handleDownload = async (documentId, fileName) => {
     try {
       const response = await axios.get(`/api/files/output/${documentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${currentUser.token}` },
         responseType: "blob",
       });
 
@@ -178,7 +178,11 @@ export default function FileList({
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+if (error && error.response?.status === 403) {
+  return <div>Error: You are not authorized to view these files. Please log in again.</div>;
+}
+if (error) return <div>Error: {error.message}</div>;
+
 
   return (
     <>

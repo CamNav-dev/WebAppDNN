@@ -4,11 +4,11 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import authRoutes from './routes/auth.route.js';
 import fileRoutes from './routes/upload.route.js'; // Import the file routes
+import { errorHandler } from './utils/error.js';
 
 dotenv.config();
 
 const mongoURI = process.env.MONGO;
-
 mongoose.connect(mongoURI, {
   dbName: 'DNNWebAppDB', 
 })
