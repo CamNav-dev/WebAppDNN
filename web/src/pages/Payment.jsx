@@ -50,12 +50,14 @@ export default function Payment() {
         return;
       }
 
-      navigate('/dashboard');
+      // Redirigir a la página de confirmación de pago
+      navigate('/payment-confirmation');
     } catch (error) {
       setLoading(false);
       setError('There was a problem processing the card. Please try again.');
     }
-  };
+};
+
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">

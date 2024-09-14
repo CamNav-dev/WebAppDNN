@@ -28,25 +28,11 @@ import {
   deleteUserFailure,
 } from "../redux/user/userSlice";
 
-const countries = [
-  "Perú",
-  "USA",
-  "UK",
-  "Canadá",
-  "Australia",
-  "Alemania",
-  "Francia",
-  "Japón",
-  "China",
-  "India",
-  "Brazil",
-  "Tailanda",
-  "Otro",
-];
+const countries = ["Perú", "USA", "UK", "Canadá", "Australia", "Alemania", "Francia", "Japón", "China", "India", "Brazil", "Tailanda", "Otro"];
 
 function Profile() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();  // Para redirigir después de la eliminación
+  const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
 
   const [formData, setFormData] = useState({
@@ -58,6 +44,8 @@ function Profile() {
       expiry: "",
       cvv: "",
     },
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const [editMode, setEditMode] = useState(false);
@@ -68,20 +56,20 @@ function Profile() {
   });
 
   const [openDialog, setOpenDialog] = useState(false);
-  
+
   useEffect(() => {
     if (currentUser) {
       setFormData({
         username: currentUser.username || "",
         email: currentUser.email || "",
-        country: countries.includes(currentUser.country)
-          ? currentUser.country
-          : "Other",
+        country: countries.includes(currentUser.country) ? currentUser.country : "Other",
         creditCard: {
           number: currentUser.creditCard?.number || "",
           expiry: currentUser.creditCard?.expiry || "",
           cvv: currentUser.creditCard?.cvv || "",
         },
+        newPassword: "",
+        confirmPassword: "",
       });
     }
   }, [currentUser]);
@@ -115,9 +103,25 @@ function Profile() {
       return;
     }
 
+    if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+      setSnackbar({
+        open: true,
+        message: "Las contraseñas no coinciden",
+        severity: "error",
+      });
+      return;
+    }
+
     try {
       dispatch(updateUserStart());
-      const response = await axios.put(`/api/auth/update/${currentUser._id}`, formData);
+      const updateData = { ...formData };
+      // Elimina los campos de nueva contraseña si no se ha proporcionado
+      if (updateData.newPassword) {
+        updateData.password = updateData.newPassword;
+        delete updateData.newPassword;
+        delete updateData.confirmPassword;
+      }
+      const response = await axios.put(`/api/auth/update/${currentUser._id}`, updateData);
       dispatch(updateUserSuccess(response.data.user));
       setEditMode(false);
       setSnackbar({
@@ -251,6 +255,28 @@ function Profile() {
             sx={{ mb: 2 }}
             disabled={!editMode}
           />
+          {editMode && (
+            <>
+              <TextField
+                label="Nueva Contraseña"
+                name="newPassword"
+                type="password"
+                value={formData.newPassword}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                label="Confirmar Contraseña"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ mb: 2 }}
+              />
+            </>
+          )}
         </Grid>
       </Grid>
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>

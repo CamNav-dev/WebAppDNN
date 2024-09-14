@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { errorHandler, createError } from '../utils/error.js';
 import jwt from 'jsonwebtoken';
 import Stripe from 'stripe';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import CryptoJS from 'crypto-js';
 
 export const signup = async (req, res, next) => {
     const { username, email, password } = req.body;
@@ -81,40 +81,40 @@ export const deleteUser = async (req, res, next) => {
 
 // Update user
 export const updateUser = async (req, res, next) => {
-    const { id } = req.params;  // El ID del usuario que se va a actualizar
-    const { username, email, password, creditCard, role, country } = req.body;  // Agregar los campos faltantes
+    const { id } = req.params;
+    const { username, email, password, creditCard, role, country } = req.body;
 
     try {
-        // Buscar el usuario en la base de datos por su ID
         let user = await User.findById(id);
 
-        if (!user) return next(errorHandler(404, 'User not found'));  // Si el usuario no se encuentra, lanzar error
+        if (!user) return next(errorHandler(404, 'User not found'));
 
-        // Actualizar los campos solo si se proporcionan
+        // Update fields if provided
         if (username) user.username = username;
         if (email) user.email = email;
-
-        // Rehashear la contraseña si se proporciona una nueva
-        if (password) {
-            const hashPassword = bcrypt.hashSync(password, 10);
-            user.password = hashPassword;
-        }
-
-        // Actualización de otros campos opcionales
         if (creditCard) user.creditCard = creditCard;
         if (role) user.role = role;
         if (country) user.country = country;
 
-        // Guardar el usuario actualizado en la base de datos
+        // Handle password update
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password, salt);
+        }
+
+        // Save the updated user
         const updatedUser = await user.save();
 
-        // Enviar una respuesta de éxito con el usuario actualizado
+        // Remove password from response
+        const userResponse = updatedUser.toObject();
+        delete userResponse.password;
+
         res.status(200).json({
             message: 'User updated successfully',
-            user: updatedUser  // Devuelve los datos del usuario actualizado
+            user: userResponse
         });
     } catch (error) {
-        next(error);  // En caso de error, manejarlo con el middleware de error
+        next(error);
     }
 };
 
@@ -126,19 +126,25 @@ export const processPayment = async (req, res, next) => {
         return next(createError(400, 'All fields are required'));
     }
 
+    // Encriptar los datos de la tarjeta
+    const encryptedCardData = encryptCardData({
+        number: cardNumber,
+        expiry: expiryDate,
+        cvv: cvv,
+    });
+
     try {
         const updatedUser = await User.findByIdAndUpdate(
             id,
             {
                 $set: {
-                    'creditCard.number': cardNumber,
-                    'creditCard.expiry': expiryDate,
-                    // Note: It's not recommended to store CVV
+                    'creditCard.number': encryptedCardData.number,
+                    'creditCard.expiry': encryptedCardData.expiry,
+                    // No almacenar el CVV de forma insegura
                     hasPaid: true
                 },
             },
             { new: true }
-
         );
 
         if (!updatedUser) {
@@ -154,7 +160,7 @@ export const processPayment = async (req, res, next) => {
                 email: updatedUser.email,
                 hasPaid: updatedUser.hasPaid,
                 creditCard: {
-                    number: updatedUser.creditCard.number,
+                    number: '**** **** **** ' + updatedUser.creditCard.number.slice(-4), // Mostrar solo los últimos 4 dígitos
                     expiry: updatedUser.creditCard.expiry,
                 }
             }
@@ -163,3 +169,29 @@ export const processPayment = async (req, res, next) => {
         next(error);
     }
 };
+
+const secretKey = process.env.SECRET_KEY || 'your-secret-key';
+export const encryptCardData = (cardData) => {
+    const encryptedNumber = CryptoJS.AES.encrypt(cardData.number, secretKey).toString();
+    const encryptedExpiry = CryptoJS.AES.encrypt(cardData.expiry, secretKey).toString();
+    const encryptedCvv = CryptoJS.AES.encrypt(cardData.cvv, secretKey).toString();
+  
+    return {
+      number: encryptedNumber,
+      expiry: encryptedExpiry,
+      cvv: encryptedCvv, // No se recomienda almacenar el CVV, pero en caso de hacerlo, debe estar encriptado
+    };
+  };
+  
+  // Para desencriptar:
+  export const decryptCardData = (encryptedCardData) => {
+    const decryptedNumber = CryptoJS.AES.decrypt(encryptedCardData.number, secretKey).toString(CryptoJS.enc.Utf8);
+    const decryptedExpiry = CryptoJS.AES.decrypt(encryptedCardData.expiry, secretKey).toString(CryptoJS.enc.Utf8);
+    const decryptedCvv = CryptoJS.AES.decrypt(encryptedCardData.cvv, secretKey).toString(CryptoJS.enc.Utf8);
+  
+    return {
+      number: decryptedNumber,
+      expiry: decryptedExpiry,
+      cvv: decryptedCvv,
+    };
+  };

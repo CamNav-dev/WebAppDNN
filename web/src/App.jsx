@@ -16,6 +16,7 @@ import { useDispatch } from 'react-redux';
 import { updateToken } from '../src/redux/user/userSlice.js';
 import Contact from './pages/Contact';
 import Payment from './pages/Payment';
+import PaymentConfirmation from './components/PaymentConfirmation.jsx';
 export default function App() {
   const dispatch = useDispatch();
 
@@ -40,6 +41,7 @@ export default function App() {
            <Route path="/signup" element={<SignUp />} />
            <Route path="/contact" element={<Contact />} />
            <Route path="/payment/:id" element={<Payment />} />
+           <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
            {/* Protect the dashboard and profile routes with PrivateRoute */}
            <Route path="/dashboard" element={
              <PrivateRoute>
