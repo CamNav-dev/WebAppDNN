@@ -83,7 +83,7 @@ export const deleteUser = async (req, res, next) => {
 // Update user
 export const updateUser = async (req, res, next) => {
     const { id } = req.params;
-    const { username, email, password, creditCard, role, country } = req.body;
+    const { username, email, password, creditCard, role, country, membershipType } = req.body;
 
     try {
         let user = await User.findById(id);
@@ -95,7 +95,7 @@ export const updateUser = async (req, res, next) => {
         if (email) user.email = email;
         if (creditCard) user.creditCard = creditCard;
         if (country) user.country = country;
-
+        if (membershipType) user.membershipType = membershipType;
         // Handle password update
         if (password) {
             const salt = await bcrypt.genSalt(10);
