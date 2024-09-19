@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    membershipType: {
+        type: String,
+        enum: ['plan pequeña empresa', 'plan mediana empresa', 'plan grande empresa'],
+        required: true
+    },
     updated: {
         type: Date,
         default: Date.now,
@@ -28,6 +33,10 @@ const userSchema = new mongoose.Schema({
     },
     country: {
         type: String,
+    },
+    profileImage: {
+        type: String,
+        default: ''
     },
 }, { timestamps: true });
 

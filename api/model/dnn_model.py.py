@@ -20,6 +20,8 @@ from docx import Document
 from docx.shared import Inches, Pt
 from docx.shared import RGBColor
 from io import BytesIO
+from tensorflow.keras.optimizers import Nadam
+from tensorflow.keras.optimizers import RMSprop
 
 
 def add_dataframe_to_doc(doc, dataframe, title):
@@ -61,9 +63,9 @@ def main():
         print("Python script started", file=sys.stderr)
 
         # Set seeds for reproducibility
-        np.random.seed(41)
-        random.seed(41)
-        tf.random.set_seed(41)
+        np.random.seed(42)
+        random.seed(42)
+        tf.random.set_seed(42)
 
         # Read the Excel file from stdin
         print("Reading Excel file from stdin", file=sys.stderr)
@@ -101,7 +103,7 @@ def main():
 
         X = financial_data.drop(['Monto', 'Label'], axis=1)
         y = financial_data['Label']
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=41)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         preprocessor = ColumnTransformer(transformers=[
             ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
@@ -114,13 +116,14 @@ def main():
             dense3 = Dense(128, activation='relu')(dense2)
             output = Dense(1, activation='sigmoid')(dense3)
             model = Model(inputs=input_layer, outputs=output)
-            model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy', 'precision', 'recall', 'auc'])
+            optimizer = RMSprop(learning_rate=0.001, rho=0.9)  
+            model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy', 'precision', 'recall', 'auc'])
             return model
 
         smote_pipeline = make_pipeline(
             preprocessor,
-            SMOTE(random_state=41),
-            KerasClassifier(model=build_model, epochs=50, batch_size=80, verbose=1)
+            SMOTE(random_state=42),
+            KerasClassifier(model=build_model, epochs=250, batch_size=32, verbose=1)
         )
 
         input_shape = preprocessor.fit_transform(X_train).shape[1]
@@ -142,7 +145,7 @@ def main():
         plt.savefig("roc_curve.png")
         plt.close()
 
-        anomaly_threshold = 0.98
+        anomaly_threshold = 0.90
         anomalies_indices = np.where((probabilities > anomaly_threshold) & (predictions == 1))[0]
         anomalies_indices = X_test.iloc[anomalies_indices].index 
 
