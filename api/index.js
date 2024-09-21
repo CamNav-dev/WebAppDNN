@@ -5,7 +5,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.route.js';
 import fileRoutes from './routes/upload.route.js'; // Import the file routes
 import { errorHandler } from './utils/error.js';
-
+import path from 'path';
 dotenv.config();
 
 
@@ -16,7 +16,12 @@ mongoose.connect(mongoURI, {
 .then(() => console.log('Connected to MongoDB'))
 .catch(err => console.log(err));
 
+const _dirname = path.resolve();
+
 const app = express();
+
+app.use(express.static(path.join(_dirname, '/web/dist')))
+app.get('*',(req,res) => {res.sendFile(path.join(_dirname, 'web','dist','index.html'))})
 
 // Enable CORS for all routes
 app.use(cors({
