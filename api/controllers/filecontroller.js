@@ -5,6 +5,14 @@ import {spawn} from 'child_process'
 import { PassThrough } from 'stream';
 import officegen from 'officegen';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Ahora puedes usar __dirname como de costumbre
+
 
 // Helper function to validate if the file is an Excel file
 const isExcelFile = (fileType) => {
@@ -120,7 +128,7 @@ export const testFile = async (req, res) => {
     const fileBuffer = Buffer.from(file.fileData.buffer);
 
     // Ruta a tu script de Python
-    const pythonScriptPath = path.resolve(__dirname, '../model/dnn_model.py');
+    const pythonScriptPath = path.resolve(__dirname, '../model/dnn_model.py.py');
 
     console.log(`Ejecutando script de Python: ${pythonScriptPath}`);
 
