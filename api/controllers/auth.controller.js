@@ -6,12 +6,13 @@ import Stripe from 'stripe';
 import CryptoJS from 'crypto-js';
 
 export const signup = async (req, res, next) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, membershipType } = req.body;
     const hashPassword = bcrypt.hashSync(password, 10);
     const newUser = new User({
         username,
         email,
         password: hashPassword,
+        membershipType,
         creditCard: {
             number: '',
             expiry: '',
@@ -82,7 +83,7 @@ export const deleteUser = async (req, res, next) => {
 // Update user
 export const updateUser = async (req, res, next) => {
     const { id } = req.params;
-    const { username, email, password, creditCard, role, country } = req.body;
+    const { username, email, password, creditCard, role, country, membershipType } = req.body;
 
     try {
         let user = await User.findById(id);
@@ -93,9 +94,8 @@ export const updateUser = async (req, res, next) => {
         if (username) user.username = username;
         if (email) user.email = email;
         if (creditCard) user.creditCard = creditCard;
-        if (role) user.role = role;
         if (country) user.country = country;
-
+        if (membershipType) user.membershipType = membershipType;
         // Handle password update
         if (password) {
             const salt = await bcrypt.genSalt(10);

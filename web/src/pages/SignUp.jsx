@@ -4,7 +4,9 @@ import { useDispatch } from "react-redux";
 import { signInSuccess } from "../redux/user/userSlice";
 
 export default function SignUp() {
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    membershipType: 'plan pequeña empresa' // Default value
+  });
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -33,10 +35,8 @@ export default function SignUp() {
         return;
       }
       
-      // Store user data in Redux
       dispatch(signInSuccess({ token: data.token, _id: data.userId }));
       
-      // Redirect to payment page with userId
       navigate(`/payment/${data.userId}`);
     } catch (error) {
       setLoading(false);
@@ -86,6 +86,22 @@ export default function SignUp() {
               required
               onChange={handleChange}
             />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2" htmlFor="membershipType">
+              Tipo de Membresía
+            </label>
+            <select
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="membershipType"
+              required
+              onChange={handleChange}
+              value={formData.membershipType}
+            >
+              <option value="plan pequeña empresa">Plan Pequeña Empresa</option>
+              <option value="plan mediana empresa">Plan Mediana Empresa</option>
+              <option value="plan grande empresa">Plan Grande Empresa</option>
+            </select>
           </div>
           <div className="flex items-center justify-center">
             <button

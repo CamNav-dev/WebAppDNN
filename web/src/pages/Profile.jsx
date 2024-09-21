@@ -18,7 +18,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Card,
+  CardContent,
+  CardActions,
 } from "@mui/material";
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {
   updateUserStart,
   updateUserSuccess,
@@ -30,6 +34,27 @@ import {
 
 const countries = ["Perú", "USA", "UK", "Canadá", "Australia", "Alemania", "Francia", "Japón", "China", "India", "Brazil", "Tailanda", "Otro"];
 
+const membershipPlans = [
+  {
+    type: "plan pequeña empresa",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    benefits: ["Beneficio 1", "Beneficio 2", "Beneficio 3"],
+    price: 19.99
+  },
+  {
+    type: "plan mediana empresa",
+    description: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    benefits: ["Beneficio 1", "Beneficio 2", "Beneficio 3", "Beneficio 4"],
+    price: 39.99
+  },
+  {
+    type: "plan grande empresa",
+    description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    benefits: ["Beneficio 1", "Beneficio 2", "Beneficio 3", "Beneficio 4", "Beneficio 5"],
+    price: 79.99
+  }
+];
+
 function Profile() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -39,6 +64,7 @@ function Profile() {
     username: "",
     email: "",
     country: "",
+    membershipType: "",
     creditCard: {
       number: "",
       expiry: "",
@@ -56,13 +82,17 @@ function Profile() {
   });
 
   const [openDialog, setOpenDialog] = useState(false);
+  const [openMembershipDialog, setOpenMembershipDialog] = useState(false);
+  const [selectedMembership, setSelectedMembership] = useState(null);
+  const [showAchievement, setShowAchievement] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
       setFormData({
         username: currentUser.username || "",
         email: currentUser.email || "",
-        country: countries.includes(currentUser.country) ? currentUser.country : "Other",
+        country: countries.includes(currentUser.country) ? currentUser.country : "Otro",
+        membershipType: currentUser.membershipType || "",
         creditCard: {
           number: currentUser.creditCard?.number || "",
           expiry: currentUser.creditCard?.expiry || "",
@@ -92,6 +122,7 @@ function Profile() {
       },
     }));
   };
+
 
   const handleSubmit = async () => {
     if (!currentUser || !currentUser._id) {
@@ -177,9 +208,50 @@ function Profile() {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleOpenMembershipDialog = () => {
+    setOpenMembershipDialog(true);
+  };
+
+  const handleCloseMembershipDialog = () => {
+    setOpenMembershipDialog(false);
+    setSelectedMembership(null);
+  };
+
+  const handleSelectMembership = (membershipType) => {
+    setSelectedMembership(membershipType);
+  };
+
+  const handleUpgradeMembership = async () => {
+    if (!selectedMembership) return;
+
+    try {
+      dispatch(updateUserStart());
+      const response = await axios.put(`/api/auth/update/${currentUser._id}`, {
+        membershipType: selectedMembership
+      });
+      dispatch(updateUserSuccess(response.data.user));
+      setOpenMembershipDialog(false);
+      setSnackbar({
+        open: true,
+        message: "Membresía actualizada correctamente",
+        severity: "success",
+      });
+      setShowAchievement(true);
+      setTimeout(() => setShowAchievement(false), 5000);
+    } catch (error) {
+      dispatch(updateUserFailure(error.response?.data?.message || "Error al actualizar la membresía"));
+      setSnackbar({
+        open: true,
+        message: "Error al actualizar la membresía",
+        severity: "error",
+      });
+    }
+  };
+
   if (!currentUser) {
     return <Typography>Loading...</Typography>;
   }
+
 
   return (
     <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: "auto", mt: 4 }}>
@@ -223,6 +295,22 @@ function Profile() {
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            label="Membresía Actual"
+            name="membershipType"
+            value={formData.membershipType}
+            fullWidth
+            disabled
+            sx={{ mb: 2 }}
+          />
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleOpenMembershipDialog}
+            sx={{ mb: 2 }}
+          >
+            Upgrade Membership
+          </Button>
         </Grid>
         <Grid item xs={12} sm={6}>
           <Typography variant="h6" gutterBottom>
@@ -302,6 +390,75 @@ function Profile() {
       </Box>
 
       {/* Cuadro de diálogo para confirmar eliminación */}
+      <Dialog open={openMembershipDialog} onClose={handleCloseMembershipDialog} maxWidth="md" fullWidth>
+        <DialogTitle>Actualizar Membresía</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2}>
+            {membershipPlans.filter(plan => plan.type !== formData.membershipType).map((plan) => (
+              <Grid item xs={12} sm={6} key={plan.type}>
+                <Card 
+                  variant="outlined" 
+                  sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    border: selectedMembership === plan.type ? '2px solid blue' : 'none'
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h5" component="div">
+                      {plan.type}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {plan.description}
+                    </Typography>
+                    <Typography variant="h6" component="div" sx={{ mt: 2 }}>
+                      ${plan.price}/mes
+                    </Typography>
+                    <ul>
+                      {plan.benefits.map((benefit, index) => (
+                        <li key={index}>{benefit}</li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardActions>
+                    <Button 
+                      size="small" 
+                      onClick={() => handleSelectMembership(plan.type)}
+                      variant={selectedMembership === plan.type ? "contained" : "outlined"}
+                    >
+                      Seleccionar
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMembershipDialog}>Cancelar</Button>
+          <Button onClick={handleUpgradeMembership} disabled={!selectedMembership} variant="contained">
+            Actualizar Membresía
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Logro de actualización */}
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showAchievement}
+        autoHideDuration={5000}
+        onClose={() => setShowAchievement(false)}
+      >
+        <Alert
+          icon={<EmojiEventsIcon fontSize="inherit" />}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          ¡Felicidades! Has mejorado tu membresía
+        </Alert>
+      </Snackbar>
+      
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{"¿Eliminar permanentemente?"}</DialogTitle>
         <DialogContent>
