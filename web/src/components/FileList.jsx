@@ -149,7 +149,6 @@ export default function FileList({
 
   const handleTestFile = async (fileId) => {
     setTestingFile(fileId);
-    setTestResult(null);
     try {
       const response = await axios.post(
         `/api/files/test/${fileId}`,
