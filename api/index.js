@@ -8,7 +8,6 @@ import { errorHandler } from './utils/error.js';
 import path from 'path';
 dotenv.config();
 
-
 const mongoURI = process.env.MONGO;
 mongoose.connect(mongoURI, {
   dbName: 'DNNWebAppDB', 
@@ -19,9 +18,6 @@ mongoose.connect(mongoURI, {
 const _dirname = path.resolve();
 
 const app = express();
-
-app.use(express.static(path.join(_dirname, '/web/dist')))
-app.get('*',(req,res) => {res.sendFile(path.join(_dirname, 'web','dist','index.html'))})
 
 // Enable CORS for all routes
 app.use(cors({
@@ -34,6 +30,14 @@ app.use(express.json());
 // Use the routes
 app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes); // Add the route for file uploads
+
+// Serve static files from the React app
+app.use(express.static(path.join(_dirname, '/web/dist')));
+
+// The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(_dirname, 'web', 'dist', 'index.html'));
+});
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
