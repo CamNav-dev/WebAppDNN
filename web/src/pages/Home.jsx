@@ -122,14 +122,14 @@ export default function Home() {
               <h3 className="text-2xl font-semibold mb-4">
                 Plan Pequeña Empresa
               </h3>
-              <p className="text-5xl font-bold mb-4">S/.50/mes</p>
+              <p className="text-5xl font-bold mb-4">S/.150/quarter</p>
               <p className="text-lg mb-6">
                 Ideal para negocios emergentes y autónomos
               </p>
               
               <ul className="text-left space-y-3 mb-7">
-                <li> Sube hasta 2 estados financieros cada 6 meses</li>
-                <li> Acceso a reportes inmediatos semestrales</li>
+                <li> Sube hasta 2 estados financieros cada 3 meses</li>
+                <li> Acceso a reportes inmediatos trimestrales</li>
                 <li> Exportación limitada de reportes</li>
               </ul>
 
@@ -144,10 +144,10 @@ export default function Home() {
               <h3 className="text-2xl font-semibold mb-4">
                 Plan Mediana Empresa
               </h3>
-              <p className="text-5xl font-bold mb-4">S/.110/mes</p>
+              <p className="text-5xl font-bold mb-4">S/.330/quarter</p>
               <p className="text-lg mb-6">
                 Perfecto para empresas en crecimiento con necesidades
-                financieras más complejas.
+                financieras más complejas
               </p>
               
               <ul className="text-left space-y-3 mb-7">
@@ -172,14 +172,14 @@ export default function Home() {
               <h3 className="text-2xl font-semibold mb-4">
                 Plan Grande Empresa
               </h3>
-              <p className="text-5xl font-bold mb-4">S/.185/mes</p>
+              <p className="text-5xl font-bold mb-4">S/.555/quarter</p>
               <p className="text-lg mb-6">
                 Diseñado para grandes corporaciones que requieren una gestión
-                financiera integral.
+                financiera integral
               </p>
               
               <ul className="text-left space-y-3 mb-7">
-                <li>Subida ilimitada de estados financieros.</li>
+                <li>Subida ilimitada de estados financieros</li>
                 <li>Reportes inmediatos por cada archivo subido</li>
                 <li>Exportación ilimitada de reportes</li>
               </ul>

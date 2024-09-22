@@ -37,21 +37,23 @@ const countries = ["Perú", "USA", "UK", "Canadá", "Australia", "Alemania", "Fr
 const membershipPlans = [
   {
     type: "plan pequeña empresa",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    benefits: ["Beneficio 1", "Beneficio 2", "Beneficio 3"],
-    price: 19.99
+    description: "Ideal para negocios emergentes y autónomos",
+    benefits: ["Sube hasta 2 estados financieros",
+      "Acceso a reportes inmediatos cada trimestre",
+      "Exportación limitada de reportes"],
+    price: 155
   },
   {
     type: "plan mediana empresa",
-    description: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    benefits: ["Beneficio 1", "Beneficio 2", "Beneficio 3", "Beneficio 4"],
-    price: 39.99
+    description: "Perfecto para empresas en crecimiento con necesidades financieras más complejas",
+    benefits: ["Permite subir hasta 5 estados financieros", "Reportes inmediatos para hasta 5 archivos", "Exportación de hasta 5 reportes"],
+    price: 330
   },
   {
     type: "plan grande empresa",
-    description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
-    benefits: ["Beneficio 1", "Beneficio 2", "Beneficio 3", "Beneficio 4", "Beneficio 5"],
-    price: 79.99
+    description: "Diseñado para grandes corporaciones que requieren una gestión financiera integral",
+    benefits: ["Subida ilimitada de estados financieros", "Reportes inmediatos por cada archivo subido", "Exportación ilimitada de reportes"],
+    price: 555
   }
 ];
 
@@ -85,7 +87,10 @@ function Profile() {
   const [openMembershipDialog, setOpenMembershipDialog] = useState(false);
   const [selectedMembership, setSelectedMembership] = useState(null);
   const [showAchievement, setShowAchievement] = useState(false);
-
+  const getAvailablePlans = () => {
+    const currentPlanIndex = membershipPlans.findIndex(plan => plan.type === formData.membershipType);
+    return membershipPlans.slice(currentPlanIndex + 1);
+  };
   useEffect(() => {
     if (currentUser) {
       setFormData({
@@ -230,6 +235,10 @@ function Profile() {
         membershipType: selectedMembership
       });
       dispatch(updateUserSuccess(response.data.user));
+      setFormData(prevState => ({
+        ...prevState,
+        membershipType: selectedMembership
+      }));
       setOpenMembershipDialog(false);
       setSnackbar({
         open: true,
@@ -309,7 +318,7 @@ function Profile() {
             onClick={handleOpenMembershipDialog}
             sx={{ mb: 2 }}
           >
-            Upgrade Membership
+            Subir de membresía
           </Button>
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -413,7 +422,7 @@ function Profile() {
                       {plan.description}
                     </Typography>
                     <Typography variant="h6" component="div" sx={{ mt: 2 }}>
-                      ${plan.price}/mes
+                      S/.{plan.price}/quarter
                     </Typography>
                     <ul>
                       {plan.benefits.map((benefit, index) => (

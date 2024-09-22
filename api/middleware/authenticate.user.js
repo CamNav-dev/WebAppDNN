@@ -23,3 +23,23 @@ export const authenticateUser = (req, res, next) => {
     next();
   });
 };
+
+export const checkUploadLimits = async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+  const currentDate = new Date();
+  const lastUploadDate = user.lastUploadDate || new Date(0);
+  const daysSinceLastUpload = (currentDate - lastUploadDate) / (1000 * 60 * 60 * 24);
+
+  if (daysSinceLastUpload >= RETENTION_PERIOD_DAYS) {
+    // Reset upload count if retention period has passed
+    user.uploadCount = 0;
+    user.lastUploadDate = null;
+    await user.save();
+  }
+
+  if (user.uploadCount >= FILE_LIMITS[user.membershipType]) {
+    return res.status(403).json({ message: "File upload limit reached for your membership plan." });
+  }
+
+  next();
+};

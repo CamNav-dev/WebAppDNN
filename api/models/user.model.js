@@ -1,4 +1,20 @@
 import mongoose from "mongoose";
+
+// Constants for membership types and limits
+const MEMBERSHIP_TYPES = {
+    SMALL_BUSINESS: 'plan pequeña empresa',
+    MEDIUM_BUSINESS: 'plan mediana empresa',
+    UNLIMITED: 'plan grande empresa'
+};
+
+const FILE_LIMITS = {
+    [MEMBERSHIP_TYPES.SMALL_BUSINESS]: 2,
+    [MEMBERSHIP_TYPES.MEDIUM_BUSINESS]: 5,
+    [MEMBERSHIP_TYPES.UNLIMITED]: Infinity
+};
+
+const RETENTION_PERIOD_DAYS = 90; // 3 months
+
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
@@ -13,11 +29,6 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-    },
-    membershipType: {
-        type: String,
-        enum: ['plan pequeña empresa', 'plan mediana empresa', 'plan grande empresa'],
-        required: true
     },
     updated: {
         type: Date,
@@ -38,6 +49,19 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    membershipType: {
+        type: String,
+        enum: Object.values(MEMBERSHIP_TYPES),
+        required: true
+    },
+    lastUploadDate: {
+        type: Date,
+        default: null
+    },
+    uploadCount: {
+        type: Number,
+        default: 0
+    }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

@@ -7,11 +7,25 @@ import officegen from 'officegen';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import User from '../models/user.model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Ahora puedes usar __dirname como de costumbre
+// Constants for membership types and limits
+const MEMBERSHIP_TYPES = {
+  SMALL_BUSINESS: 'plan pequeña empresa',
+  MEDIUM_BUSINESS: 'plan mediana empresa',
+  UNLIMITED: 'plan grande empresa'
+};
+
+const FILE_LIMITS = {
+  [MEMBERSHIP_TYPES.SMALL_BUSINESS]: 2,
+  [MEMBERSHIP_TYPES.MEDIUM_BUSINESS]: 5,
+  [MEMBERSHIP_TYPES.UNLIMITED]: Infinity
+};
+
+const RETENTION_PERIOD_DAYS = 90; // 3 months
 
 
 // Helper function to validate if the file is an Excel file
@@ -28,10 +42,37 @@ export const uploadFile = async (req, res) => {
 
     const { originalname, mimetype, buffer } = req.file;
 
+    // Fetch the user document from the database using the user ID
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if the retention period has passed
+    const currentDate = new Date();
+    const lastUploadDate = user.lastUploadDate || new Date(0);
+    const daysSinceLastUpload = (currentDate - lastUploadDate) / (1000 * 60 * 60 * 24);
+
+    if (daysSinceLastUpload >= RETENTION_PERIOD_DAYS) {
+      // Reset upload count if retention period has passed
+      user.uploadCount = 0;
+    }
+
+    // Check if the user has reached their upload limit
+    if (user.uploadCount >= FILE_LIMITS[user.membershipType]) {
+      return res.status(403).json({ message: "File upload limit reached for your membership plan." });
+    }
+
     // Validate file type
     if (!isExcelFile(mimetype)) {
       return res.status(400).json({ message: 'Invalid file type. Only Excel files are allowed.' });
     }
+
+    // Increment upload count and set last upload date
+    user.uploadCount += 1;
+    user.lastUploadDate = currentDate;
+    await user.save();
 
     // Create a new file record in the database
     const newFile = new UploadedFile({
@@ -47,6 +88,23 @@ export const uploadFile = async (req, res) => {
     console.error('Error in uploadFile controller:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
+};
+
+
+const deleteOldFiles = async () => {
+  const deletionDate = new Date();
+  deletionDate.setDate(deletionDate.getDate() - RETENTION_PERIOD_DAYS);
+
+  await UploadedFile.deleteMany({ uploadDate: { $lt: deletionDate } });
+  await OutputDocument.deleteMany({ uploadDate: { $lt: deletionDate } });
+};
+
+export const scheduleFileDeletion = () => {
+  // Run deleteOldFiles every day at midnight
+  cron.schedule('0 0 * * *', async () => {
+    console.log('Running scheduled task to delete old files');
+    await deleteOldFiles();
+  });
 };
 
 // Update file name
