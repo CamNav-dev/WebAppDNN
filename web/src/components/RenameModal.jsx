@@ -34,7 +34,7 @@ export default function FileUpload( {callback} ) {
       setError(''); // Clear previous errors
 
       const response = await axios.post(
-        'http://localhost:3000/api/files/upload',
+        '/api/files/upload',
         formData,
         {
           headers: {
