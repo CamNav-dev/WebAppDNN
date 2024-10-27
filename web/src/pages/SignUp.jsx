@@ -1,0 +1,143 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { signInSuccess } from "../redux/user/userSlice";
+
+export default function SignUp() {
+  const [formData, setFormData] = useState({
+    membershipType: 'plan pequeña empresa' // Default value
+  });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validar nombre y apellido
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,}$/;
+    if (!nameRegex.test(formData.username) || formData.username.trim().split(' ').length < 2) {
+      setError('El nombre debe contener al menos un nombre y un apellido.');
+      return;
+    }
+
+    // Validar contraseña: al menos 8 caracteres
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (data.success === false) {
+        setError(true);
+        return;
+      }
+
+      dispatch(signInSuccess({ token: data.token, _id: data.userId }));
+
+      navigate(`/payment/${data.userId}`);
+    } catch (error) {
+      setLoading(false);
+      setError(true);
+    }
+  };
+
+  return (
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 w-full max-w-md">
+        <div className="mb-4 text-center">
+          <h2 className="text-2xl font-bold">Crear una cuenta</h2>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2" htmlFor="username">
+              Nombre Completo
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="username"
+              type="text"
+              placeholder="Ej: Juan Perez"
+              required
+              onChange={handleChange}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2" htmlFor="email">
+              Correo electrónico
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="email"
+              type="email"
+              placeholder="Ej: juan.perez@example.com"
+              required
+              onChange={handleChange}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2" htmlFor="password">
+              Contraseña
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="password"
+              type="password"
+              placeholder="Ej: Mínimo 8 caracteres"
+              required
+              onChange={handleChange}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2" htmlFor="membershipType">
+              Tipo de Membresía
+            </label>
+            <select
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="membershipType"
+              required
+              onChange={handleChange}
+              value={formData.membershipType}
+            >
+              <option value="plan pequeña empresa">Plan Pequeña Empresa</option>
+              <option value="plan mediana empresa">Plan Mediana Empresa</option>
+              <option value="plan grande empresa">Plan Grande Empresa</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-center">
+            <button
+              className="mt-4 bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-1/2"
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Crear Usuario'}
+            </button>
+          </div>
+          {error && <p className="text-red-700 mt-5">{typeof error === 'string' ? error : '¡Algo salió mal!'}</p>}
+        </form>
+        <div className="mt-4 text-center">
+          ¿Ya tienes una cuenta?
+          <Link to="/signin" className="text-orange-500 font-bold ml-4">
+            Iniciar sesión
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+

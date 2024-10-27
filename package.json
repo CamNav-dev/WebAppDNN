@@ -1,0 +1,44 @@
+{
+  "name": "dnnwebapp",
+  "version": "1.0.0",
+  "description": "Hello World!\r Financial Statement Fraud detection using DNN",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon api/index.js",
+    "start": "node api/index.js",
+    "build": "npm install && npm install --prefix web && npm run build --prefix web"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@heroicons/react": "^2.1.5",
+    "@mui/icons-material": "^6.1.5",
+    "@mui/lab": "^6.0.0-beta.9",
+    "@mui/material": "^6.1.5",
+    "@reduxjs/toolkit": "^2.2.5",
+    "axios": "^1.7.7",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "gridfs-stream": "^1.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.436.0",
+    "mongoose": "^8.5.3",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3",
+    "nodemon": "^3.1.3",
+    "officegen": "^0.6.5",
+    "stripe": "^16.11.0",
+    "tmp": "^0.2.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}
