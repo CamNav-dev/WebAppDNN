@@ -91,7 +91,7 @@ function Profile() {
 
   const fetchUserProfile = async () => {
     try {
-      const res = await axios.get(`/api/user/profile`, {
+      const res = await axios.get(`/api/auth/profile`, {
         headers: {
           'Authorization': `Bearer ${currentUser?.token}`
         }

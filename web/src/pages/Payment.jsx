@@ -30,11 +30,29 @@ export default function Payment() {
 
   const insertCreditCard = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
+    
+    // Format expiry date as MM/YY
+    if (name === "expiryDate") {
+      let formattedValue = value.replace(/\D/g, "");
+      if (formattedValue.length >= 2) {
+        formattedValue = `${formattedValue.slice(0, 2)}/${formattedValue.slice(2, 4)}`;
+      }
+      
+      setFormData(prevState => ({
+        ...prevState,
+        creditCard: {
+          ...prevState.creditCard,
+          [name]: formattedValue
+        }
+      }));
+      return;
+    }
+
+    setFormData(prevState => ({
       ...prevState,
       creditCard: {
         ...prevState.creditCard,
-        [name]: name === "cardNumber" ? formatCardNumber(value) : value
+        [name]: name === "cardNumber" ? formatCardNumber(value) : value,
       },
     }));
   };
@@ -95,7 +113,7 @@ export default function Payment() {
     }
 
     // Formato de fecha sin "/"
-    const cleanedExpiryDate = expiryDate.replace("/", "");
+    const cleanedExpiryDate = expiryDate.replace(/\s+/g, "");
 
     try {
       setLoading(true);
