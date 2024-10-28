@@ -7,7 +7,7 @@ export default function SignUp() {
   const [formData, setFormData] = useState({
     membershipType: 'plan pequeña empresa' // Default value
   });
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -18,9 +18,23 @@ export default function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validar nombre y apellido
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,}$/;
+    if (!nameRegex.test(formData.username) || formData.username.trim().split(' ').length < 2) {
+      setError('El nombre debe contener al menos un nombre y un apellido.');
+      return;
+    }
+
+    // Validar contraseña: al menos 8 caracteres
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
     try {
       setLoading(true);
-      setError(false);
+      setError(null);
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -34,9 +48,9 @@ export default function SignUp() {
         setError(true);
         return;
       }
-      
+
       dispatch(signInSuccess({ token: data.token, _id: data.userId }));
-      
+
       navigate(`/payment/${data.userId}`);
     } catch (error) {
       setLoading(false);
@@ -53,12 +67,13 @@ export default function SignUp() {
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2" htmlFor="username">
-              Nombre
+              Nombre Completo
             </label>
             <input
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               id="username"
               type="text"
+              placeholder="Ej: Juan Perez"
               required
               onChange={handleChange}
             />
@@ -71,6 +86,7 @@ export default function SignUp() {
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               id="email"
               type="email"
+              placeholder="Ej: juan.perez@example.com"
               required
               onChange={handleChange}
             />
@@ -83,6 +99,7 @@ export default function SignUp() {
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               id="password"
               type="password"
+              placeholder="Ej: Mínimo 8 caracteres"
               required
               onChange={handleChange}
             />
@@ -111,11 +128,11 @@ export default function SignUp() {
               {loading ? 'Loading...' : 'Crear Usuario'}
             </button>
           </div>
-          {error && <p className="text-red-700 mt-5">Something went wrong!</p>}
+          {error && <p className="text-red-700 mt-5">{typeof error === 'string' ? error : '¡Algo salió mal!'}</p>}
         </form>
         <div className="mt-4 text-center">
           ¿Ya tienes una cuenta?
-          <Link to="/payment" className="text-orange-500 font-bold ml-4">
+          <Link to="/signin" className="text-orange-500 font-bold ml-4">
             Iniciar sesión
           </Link>
         </div>

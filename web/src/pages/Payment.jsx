@@ -1,63 +1,192 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch } from 'react-redux';
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+
 export default function Payment() {
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    creditCard: {
+      cardNumber: "",
+      expiryDate: "",
+      cvv: "",
+      cardHolder: "",
+    },
+  });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
   const { id } = useParams(); // Get userId from URL
   const { token } = useSelector((state) => state.user.currentUser);
-  
-  useEffect(() => {
-    if (!currentUser) {
-      navigate('/signin');
-    }
-  }, [currentUser, navigate]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+  useEffect(() => {
+    const fetchCardData = async () => {
+      if (!currentUser) {
+        navigate("/signin");
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/auth/user/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          if (userData.creditCard) {
+            setFormData(prevState => ({
+              ...prevState,
+              creditCard: {
+                ...prevState.creditCard,
+                cardNumber: userData.creditCard.number ? formatCardNumber(userData.creditCard.number) : "",
+                expiryDate: userData.creditCard.expiry || "",
+              }
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching card data:", err);
+      }
+    };
+
+    fetchCardData();
+  }, [currentUser, navigate, id, token]);
+
+  const formatCardNumber = (value) => {
+    return value
+      .replace(/\s+/g, "")
+      .replace(/(\d{4})/g, "$1 ")
+      .trim();
+  };
+
+  const insertCreditCard = (e) => {
+    const { name, value } = e.target;
+    
+    // Format expiry date as MM/YY
+    if (name === "expiryDate") {
+      let formattedValue = value.replace(/\D/g, "");
+      if (formattedValue.length >= 2) {
+        formattedValue = `${formattedValue.slice(0, 2)}/${formattedValue.slice(2, 4)}`;
+      }
+      
+      setFormData(prevState => ({
+        ...prevState,
+        creditCard: {
+          ...prevState.creditCard,
+          [name]: formattedValue
+        }
+      }));
+      return;
+    }
+
+    setFormData(prevState => ({
+      ...prevState,
+      creditCard: {
+        ...prevState.creditCard,
+        [name]: name === "cardNumber" ? formatCardNumber(value) : value,
+      },
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { cardNumber, expiryDate, cvv, cardHolder } = formData;
-    if (!cardNumber || !expiryDate || !cvv || !cardHolder) {
-      setError('All fields are required.');
+    const { cardNumber, expiryDate, cvv, cardHolder } = formData.creditCard;
+
+    // Validaciones de campos
+    const cardNumberRegex = /^\d{16}$/;
+    const expiryDateRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
+    const cvvRegex = /^\d{3}$/;
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,}$/;
+    const cleanedCardNumber = cardNumber.replace(/\s+/g, "");
+    if (!cardHolder || !cardNumber || !expiryDate || !cvv) {
+      setError("Todos los campos son obligatorios.");
       return;
     }
+
+    if (
+      !nameRegex.test(cardHolder) ||
+      cardHolder.trim().split(" ").length < 3
+    ) {
+      setError("El nombre debe contener al menos un nombre y dos apellidos.");
+      return;
+    }
+
+    if (!cardNumberRegex.test(cleanedCardNumber)) {
+      setError("El número de tarjeta debe contener 16 dígitos.");
+      return;
+    }
+
+    if (!expiryDateRegex.test(expiryDate)) {
+      setError("La fecha de vencimiento debe estar en formato MM/AA.");
+      return;
+    }
+
+    // Validar que la tarjeta no haya vencido
+    const [expMonth, expYear] = expiryDate.split("/");
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear() % 100;
+    const currentMonth = currentDate.getMonth() + 1;
+
+    if (
+      parseInt(expYear, 10) < currentYear ||
+      (parseInt(expYear, 10) === currentYear &&
+        parseInt(expMonth, 10) < currentMonth)
+    ) {
+      setError("La tarjeta ha vencido.");
+      return;
+    }
+
+    if (!cvvRegex.test(cvv)) {
+      setError("El CVV debe ser un número de 3 dígitos.");
+      return;
+    }
+
+    // Formato de fecha sin "/"
+
+    const cleanedExpiryDate = expiryDate.replace(/\s+/g, "");
 
     try {
       setLoading(true);
       setError(null);
+  
       const res = await fetch(`/api/auth/payment/${id}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          cardNumber: cleanedCardNumber,
+          expiryDate: cleanedExpiryDate,
+          cvv,
+          cardHolder,
+        }),
       });
-
+  
       const data = await res.json();
-      setLoading(false);
-
-      if (data.success === false) {
-        setError('Error in card registration.');
-        return;
+      
+      if (res.ok) {
+        // Update local state with saved card data
+        setFormData(prevState => ({
+          ...prevState,
+          creditCard: {
+            ...prevState.creditCard,
+            cardNumber: formatCardNumber(data.creditCard.number),
+            expiryDate: data.creditCard.expiry,
+          }
+        }));
+        navigate('/payment-confirmation');
+      } else {
+        setError(data.message || "Error processing card. Please try again.");
       }
-
-      // Redirigir a la página de confirmación de pago
-      navigate('/payment-confirmation');
     } catch (error) {
+      setError("Error processing card. Please try again.");
+    } finally {
       setLoading(false);
-      setError('There was a problem processing the card. Please try again.');
     }
-};
-
+  };
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -72,7 +201,6 @@ export default function Payment() {
         {/* Tarjeta de crédito visual */}
         <div className="credit-card p-4 rounded-lg shadow-md mb-4">
           <div className="credit-card-logo text-right mb-4">
-            {/* Logo de la tarjeta */}
             <img
               src="https://usa.visa.com/dam/VCOM/blogs/visa-logo-white-on-blue-800x450.png"
               alt="Logo"
@@ -80,14 +208,14 @@ export default function Payment() {
             />
           </div>
           <div className="credit-card-number text-lg font-mono mb-4">
-            {formData.cardNumber || "**** **** **** ****"}
+            {formData.creditCard.cardNumber || "**** **** **** ****"}
           </div>
           <div className="flex justify-between items-center">
             <div className="credit-card-holder font-mono text-sm">
-              {formData.cardHolder || "NOMBRE COMPLETO"}
+              {formData.creditCard.cardHolder || "NOMBRE COMPLETO"}
             </div>
             <div className="credit-card-expiry font-mono text-sm">
-              {formData.expiryDate || "MM/AA"}
+              {formData.creditCard.expiryDate || "MM/AA"}
             </div>
           </div>
         </div>
@@ -99,11 +227,12 @@ export default function Payment() {
             </label>
             <input
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="cardHolder"
+              name="cardHolder"
               type="text"
               placeholder="Nombre Completo"
               required
-              onChange={handleChange}
+              onChange={insertCreditCard}
+              value={formData.creditCard.cardHolder || ""}
             />
           </div>
           <div className="mb-4">
@@ -112,11 +241,13 @@ export default function Payment() {
             </label>
             <input
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="cardNumber"
+              name="cardNumber"
               type="text"
               placeholder="1234 5678 9123 4567"
+              maxLength="19"
               required
-              onChange={handleChange}
+              onChange={insertCreditCard}
+              value={formData.creditCard.cardNumber || ""}
             />
           </div>
           <div className="flex space-x-4">
@@ -126,11 +257,13 @@ export default function Payment() {
               </label>
               <input
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                id="expiryDate"
+                name="expiryDate"
                 type="text"
                 placeholder="MM/AA"
                 required
-                onChange={handleChange}
+                maxLength="5"
+                onChange={insertCreditCard}
+                value={formData.creditCard.expiryDate || ""}
               />
             </div>
             <div className="mb-4 w-1/2">
@@ -139,11 +272,13 @@ export default function Payment() {
               </label>
               <input
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                id="cvv"
+                name="cvv"
                 type="password"
                 placeholder="123"
                 required
-                onChange={handleChange}
+                maxLength="3"
+                onChange={insertCreditCard}
+                value={formData.creditCard.cvv || ""}
               />
             </div>
           </div>
@@ -153,13 +288,15 @@ export default function Payment() {
               type="submit"
               disabled={loading}
             >
-              {loading ? 'Procesando...' : 'Confirmar Pago'}
+              {loading ? "Procesando..." : "Confirmar Pago"}
             </button>
           </div>
-          {error && <p className='text-red-700 mt-5'>{error}</p>}
+          {error && <p className="text-red-700 mt-5">{error}</p>}
         </form>
         <div className="mt-4 text-center">
-          <Link to="/" className="text-blue-300 font-bold">Cancelar</Link>
+          <Link to="/" className="text-blue-300 font-bold">
+            Cancelar
+          </Link>
         </div>
       </div>
     </div>

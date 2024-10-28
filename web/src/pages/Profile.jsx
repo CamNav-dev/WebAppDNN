@@ -16,13 +16,11 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   Card,
   CardContent,
   CardActions,
 } from "@mui/material";
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {
   updateUserStart,
   updateUserSuccess,
@@ -38,21 +36,31 @@ const membershipPlans = [
   {
     type: "plan pequeña empresa",
     description: "Ideal para negocios emergentes y autónomos",
-    benefits: ["Sube hasta 2 estados financieros",
+    benefits: [
+      "Sube hasta 2 estados financieros",
       "Acceso a reportes inmediatos cada trimestre",
-      "Exportación limitada de reportes"],
+      "Exportación limitada de reportes"
+    ],
     price: 155
   },
   {
     type: "plan mediana empresa",
     description: "Perfecto para empresas en crecimiento con necesidades financieras más complejas",
-    benefits: ["Permite subir hasta 5 estados financieros", "Reportes inmediatos para hasta 5 archivos", "Exportación de hasta 5 reportes"],
+    benefits: [
+      "Permite subir hasta 5 estados financieros",
+      "Reportes inmediatos para hasta 5 archivos",
+      "Exportación de hasta 5 reportes"
+    ],
     price: 330
   },
   {
     type: "plan grande empresa",
     description: "Diseñado para grandes corporaciones que requieren una gestión financiera integral",
-    benefits: ["Subida ilimitada de estados financieros", "Reportes inmediatos por cada archivo subido", "Exportación ilimitada de reportes"],
+    benefits: [
+      "Subida ilimitada de estados financieros",
+      "Reportes inmediatos por cada archivo subido",
+      "Exportación ilimitada de reportes"
+    ],
     price: 555
   }
 ];
@@ -86,11 +94,7 @@ function Profile() {
   const [openDialog, setOpenDialog] = useState(false);
   const [openMembershipDialog, setOpenMembershipDialog] = useState(false);
   const [selectedMembership, setSelectedMembership] = useState(null);
-  const [showAchievement, setShowAchievement] = useState(false);
-  const getAvailablePlans = () => {
-    const currentPlanIndex = membershipPlans.findIndex(plan => plan.type === formData.membershipType);
-    return membershipPlans.slice(currentPlanIndex + 1);
-  };
+
   useEffect(() => {
     if (currentUser) {
       setFormData({
@@ -101,7 +105,7 @@ function Profile() {
         creditCard: {
           number: currentUser.creditCard?.number || "",
           expiry: currentUser.creditCard?.expiry || "",
-          cvv: currentUser.creditCard?.cvv || "",
+          cvv: "",
         },
         newPassword: "",
         confirmPassword: "",
@@ -128,7 +132,6 @@ function Profile() {
     }));
   };
 
-
   const handleSubmit = async () => {
     if (!currentUser || !currentUser._id) {
       setSnackbar({
@@ -151,7 +154,6 @@ function Profile() {
     try {
       dispatch(updateUserStart());
       const updateData = { ...formData };
-      // Elimina los campos de nueva contraseña si no se ha proporcionado
       if (updateData.newPassword) {
         updateData.password = updateData.newPassword;
         delete updateData.newPassword;
@@ -186,7 +188,7 @@ function Profile() {
         severity: "success",
       });
       setTimeout(() => {
-        navigate("/");  // Redirigir a la página principal después de eliminar
+        navigate("/"); // Redirigir a la página principal después de eliminar
       }, 2000);
     } catch (error) {
       dispatch(deleteUserFailure(error.response?.data?.message || "Error al eliminar el usuario"));
@@ -245,8 +247,6 @@ function Profile() {
         message: "Membresía actualizada correctamente",
         severity: "success",
       });
-      setShowAchievement(true);
-      setTimeout(() => setShowAchievement(false), 5000);
     } catch (error) {
       dispatch(updateUserFailure(error.response?.data?.message || "Error al actualizar la membresía"));
       setSnackbar({
@@ -260,7 +260,6 @@ function Profile() {
   if (!currentUser) {
     return <Typography>Loading...</Typography>;
   }
-
 
   return (
     <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: "auto", mt: 4 }}>
@@ -318,21 +317,19 @@ function Profile() {
             onClick={handleOpenMembershipDialog}
             sx={{ mb: 2 }}
           >
-            Subir de membresía
+            Cambiar Membresía
           </Button>
         </Grid>
         <Grid item xs={12} sm={6}>
-          <Typography variant="h6" gutterBottom>
-            Información de Tarjeta de Crédito
-          </Typography>
+          <Typography variant="h6">Información de la Tarjeta de Crédito</Typography>
           <TextField
             label="Número de Tarjeta"
             name="number"
             value={formData.creditCard.number}
             onChange={handleCreditCardChange}
             fullWidth
-            sx={{ mb: 2 }}
             disabled={!editMode}
+            sx={{ mb: 2 }}
           />
           <TextField
             label="Fecha de Expiración"
@@ -340,8 +337,8 @@ function Profile() {
             value={formData.creditCard.expiry}
             onChange={handleCreditCardChange}
             fullWidth
-            sx={{ mb: 2 }}
             disabled={!editMode}
+            sx={{ mb: 2 }}
           />
           <TextField
             label="CVV"
@@ -349,155 +346,74 @@ function Profile() {
             value={formData.creditCard.cvv}
             onChange={handleCreditCardChange}
             fullWidth
-            sx={{ mb: 2 }}
             disabled={!editMode}
+            sx={{ mb: 2 }}
           />
-          {editMode && (
-            <>
-              <TextField
-                label="Nueva Contraseña"
-                name="newPassword"
-                type="password"
-                value={formData.newPassword}
-                onChange={handleInputChange}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Confirmar Contraseña"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-            </>
-          )}
         </Grid>
       </Grid>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
-        {editMode ? (
-          <>
-            <Button onClick={() => setEditMode(false)} sx={{ mr: 2 }}>
-              Cancelar
-            </Button>
-            <Button variant="contained" onClick={handleSubmit}>
-              Guardar
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="contained" onClick={() => setEditMode(true)} sx={{ mr: 2 }}>
-              Editar Perfil
-            </Button>
-            <Button variant="outlined" color="error" onClick={handleOpenDialog}>
-              Eliminar Cuenta
-            </Button>
-          </>
-        )}
-      </Box>
+      <Button variant="contained" onClick={() => setEditMode((prev) => !prev)}>
+        {editMode ? "Cancelar" : "Editar"}
+      </Button>
+      {editMode && (
+        <Button variant="contained" color="primary" onClick={handleSubmit} sx={{ ml: 2 }}>
+          Guardar Cambios
+        </Button>
+      )}
+      <Button variant="outlined" color="error" onClick={handleOpenDialog} sx={{ ml: 2 }}>
+        Eliminar Cuenta
+      </Button>
 
-      {/* Cuadro de diálogo para confirmar eliminación */}
-      <Dialog open={openMembershipDialog} onClose={handleCloseMembershipDialog} maxWidth="md" fullWidth>
-        <DialogTitle>Actualizar Membresía</DialogTitle>
+      {/* Snackbar for notifications */}
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      {/* Dialog for deleting user confirmation */}
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Eliminar Cuenta</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2}>
-            {membershipPlans.filter(plan => plan.type !== formData.membershipType).map((plan) => (
-              <Grid item xs={12} sm={6} key={plan.type}>
-                <Card 
-                  variant="outlined" 
-                  sx={{ 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    border: selectedMembership === plan.type ? '2px solid blue' : 'none'
-                  }}
-                >
-                  <CardContent>
-                    <Typography variant="h5" component="div">
-                      {plan.type}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {plan.description}
-                    </Typography>
-                    <Typography variant="h6" component="div" sx={{ mt: 2 }}>
-                      S/.{plan.price}/quarter
-                    </Typography>
-                    <ul>
-                      {plan.benefits.map((benefit, index) => (
-                        <li key={index}>{benefit}</li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                  <CardActions>
-                    <Button 
-                      size="small" 
-                      onClick={() => handleSelectMembership(plan.type)}
-                      variant={selectedMembership === plan.type ? "contained" : "outlined"}
-                    >
-                      Seleccionar
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+          <Typography>¿Está seguro de que desea eliminar su cuenta?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancelar</Button>
+          <Button onClick={handleDeleteUser} color="error">Eliminar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog for selecting a membership plan */}
+      <Dialog open={openMembershipDialog} onClose={handleCloseMembershipDialog}>
+        <DialogTitle>Seleccionar Plan de Membresía</DialogTitle>
+        <DialogContent>
+          {membershipPlans.map((plan) => (
+            <Card key={plan.type} sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography variant="h5">{plan.type}</Typography>
+                <Typography color="text.secondary">{plan.description}</Typography>
+                <Typography>Beneficios:</Typography>
+                <ul>
+                  {plan.benefits.map((benefit, index) => (
+                    <li key={index}><Typography>{benefit}</Typography></li>
+                  ))}
+                </ul>
+                <Typography variant="h6">Precio: ${plan.price}</Typography>
+              </CardContent>
+              <CardActions>
+                <Button onClick={() => handleSelectMembership(plan.type)} size="small">
+                  Seleccionar
+                </Button>
+              </CardActions>
+            </Card>
+          ))}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseMembershipDialog}>Cancelar</Button>
-          <Button onClick={handleUpgradeMembership} disabled={!selectedMembership} variant="contained">
+          <Button onClick={handleUpgradeMembership} color="primary" disabled={!selectedMembership}>
             Actualizar Membresía
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Logro de actualización */}
-      <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showAchievement}
-        autoHideDuration={5000}
-        onClose={() => setShowAchievement(false)}
-      >
-        <Alert
-          icon={<EmojiEventsIcon fontSize="inherit" />}
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          ¡Felicidades! Has mejorado tu membresía
-        </Alert>
-      </Snackbar>
-      
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>{"¿Eliminar permanentemente?"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Estás a punto de eliminar tu cuenta. Esta acción es irreversible. ¿Estás seguro de que deseas continuar?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            No, regresar
-          </Button>
-          <Button onClick={handleDeleteUser} color="error">
-            Sí, eliminar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Paper>
   );
 }

@@ -14,9 +14,8 @@ export const signup = async (req, res, next) => {
         password: hashPassword,
         membershipType,
         creditCard: {
-            number: '',
-            expiry: '',
-            cvv: ''
+            number: null,
+            expiry: null,
         }
     });
 
@@ -130,7 +129,7 @@ export const processPayment = async (req, res, next) => {
     const encryptedCardData = encryptCardData({
         number: cardNumber,
         expiry: expiryDate,
-        cvv: cvv,
+        cvv: cvv, // Se puede omitir el CVV en el guardado si no deseas almacenarlo
     });
 
     try {
@@ -140,8 +139,7 @@ export const processPayment = async (req, res, next) => {
                 $set: {
                     'creditCard.number': encryptedCardData.number,
                     'creditCard.expiry': encryptedCardData.expiry,
-                    // No almacenar el CVV de forma insegura
-                    hasPaid: true
+                    hasPaid: true // Verifica si necesitas almacenar esta propiedad
                 },
             },
             { new: true }
@@ -160,7 +158,7 @@ export const processPayment = async (req, res, next) => {
                 email: updatedUser.email,
                 hasPaid: updatedUser.hasPaid,
                 creditCard: {
-                    number: '**** **** **** ' + updatedUser.creditCard.number.slice(-4), // Mostrar solo los últimos 4 dígitos
+                    number: '**** **** **** ' + updatedUser.creditCard.number.slice(-4),
                     expiry: updatedUser.creditCard.expiry,
                 }
             }
@@ -170,7 +168,7 @@ export const processPayment = async (req, res, next) => {
     }
 };
 
-const secretKey = process.env.SECRET_KEY || 'your-secret-key';
+const secretKey = process.env.JWT_SECRET || 'your-secret-key';
 export const encryptCardData = (cardData) => {
     const encryptedNumber = CryptoJS.AES.encrypt(cardData.number, secretKey).toString();
     const encryptedExpiry = CryptoJS.AES.encrypt(cardData.expiry, secretKey).toString();
@@ -195,3 +193,37 @@ export const encryptCardData = (cardData) => {
       cvv: decryptedCvv,
     };
   };
+
+  export const getUserProfile = async (req, res, next) => {
+    const { id } = req.params; // Obtenemos el id del usuario desde los parámetros
+
+    try {
+        const user = await User.findById(id); // Buscamos al usuario por su ID
+
+        if (!user) return next(createError(404, 'Usuario no encontrado'));
+
+        // Desencriptamos los datos de la tarjeta
+        const decryptedCardData = decryptCardData(user.creditCard);
+
+        // Formateamos la respuesta sin enviar el CVV
+        const userProfile = {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            membershipType: user.membershipType,
+            creditCard: {
+                number: '**** **** **** ' + decryptedCardData.number.slice(-4),
+                expiry: decryptedCardData.expiry,
+            },
+            country: user.country,
+            // Otros datos necesarios
+        };
+
+        res.status(200).json({
+            success: true,
+            user: userProfile,
+        });
+    } catch (error) {
+        next(error);
+    }
+};

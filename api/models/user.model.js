@@ -35,19 +35,11 @@ const userSchema = new mongoose.Schema({
         default: Date.now,
     },
     creditCard: {
-        number: { type: String, default: '' },  // valor por defecto vacío
-        expiry: { type: String, default: '' },
-        cvv: { type: String, default: '' },
-    },
-    role: {
-        type: String,
+        number: { type: String, required: false  }, 
+        expiry: { type: String, required: false },
     },
     country: {
         type: String,
-    },
-    profileImage: {
-        type: String,
-        default: ''
     },
     membershipType: {
         type: String,
