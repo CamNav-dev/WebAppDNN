@@ -93,9 +93,18 @@ export const updateUser = async (req, res, next) => {
         // Update fields if provided
         if (username) user.username = username;
         if (email) user.email = email;
-        if (creditCard) user.creditCard = creditCard;
         if (country) user.country = country;
         if (membershipType) user.membershipType = membershipType;
+
+        // Handle credit card update
+        if (creditCard) {
+            // Encriptar la información de la tarjeta
+            const encryptedCardData = encryptCardData(creditCard);
+            user.creditCard.number = encryptedCardData.number;
+            user.creditCard.expiry = encryptedCardData.expiry;
+            // No almacenar el CVV de forma insegura, así que puedes omitirlo aquí.
+        }
+
         // Handle password update
         if (password) {
             const salt = await bcrypt.genSalt(10);
@@ -117,6 +126,7 @@ export const updateUser = async (req, res, next) => {
         next(error);
     }
 };
+
 
 export const processPayment = async (req, res, next) => {
     const { id } = req.params;

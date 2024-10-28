@@ -91,17 +91,17 @@ function Profile() {
 
   const fetchUserProfile = async () => {
     try {
-      const res = await axios.get(`/api/auth/profile`, {
+      const res = await axios.get(`/api/auth/profile/${currentUser?._id}`, {
         headers: {
-          'Authorization': `Bearer ${currentUser?.token}`
-        }
+          'Authorization': `Bearer ${currentUser?.token}`,
+        },
       });
       if (res.data.success) {
         const user = res.data.user;
         setFormData({
           username: user.username || "",
           email: user.email || "",
-          country: countries.includes(user.country) ? user.country : "Otro",
+          country: user.country || countries[0], // Puedes definir un valor predeterminado
           membershipType: user.membershipType || "",
           creditCard: {
             number: user.creditCard?.number || "",
@@ -111,7 +111,6 @@ function Profile() {
           newPassword: "",
           confirmPassword: "",
         });
-        dispatch(updateUserSuccess(user));
       } else {
         console.error("Error al cargar el perfil");
       }
@@ -123,25 +122,12 @@ function Profile() {
   };
 
   useEffect(() => {
-    if (!currentUser || !currentUser.username) {
+    if (currentUser && currentUser._id) {
       fetchUserProfile();
-    } else {
-      setFormData({
-        username: currentUser.username || "",
-        email: currentUser.email || "",
-        country: countries.includes(currentUser.country) ? currentUser.country : "Otro",
-        membershipType: currentUser.membershipType || "",
-        creditCard: {
-          number: currentUser.creditCard?.number || "",
-          expiry: currentUser.creditCard?.expiry || "",
-          cvv: "", // No almacenar el CVV
-        },
-        newPassword: "",
-        confirmPassword: "",
-      });
-      setLoading(false);
     }
-  }, [currentUser, dispatch]);
+  }, [currentUser]);
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -243,6 +229,7 @@ function Profile() {
         updateData.creditCard.expiry = CryptoJS.AES.encrypt(updateData.creditCard.expiry, "secret_key").toString();
         delete updateData.creditCard.cvv; // No almacenar el CVV
       }
+      
 
       if (updateData.newPassword) {
         updateData.password = updateData.newPassword;
@@ -352,26 +339,34 @@ function Profile() {
       try {
         const decryptedNumber = CryptoJS.AES.decrypt(currentUser.creditCard.number, "secret_key").toString(CryptoJS.enc.Utf8);
         const decryptedExpiry = CryptoJS.AES.decrypt(currentUser.creditCard.expiry, "secret_key").toString(CryptoJS.enc.Utf8);
-        setFormData((prevState) => ({
-          ...prevState,
-          creditCard: {
-            ...prevState.creditCard,
-            number: decryptedNumber,
-            expiry: decryptedExpiry,
-          },
-        }));
+        
+        if (decryptedNumber && decryptedExpiry) {
+          setFormData((prevState) => ({
+            ...prevState,
+            creditCard: {
+              ...prevState.creditCard,
+              number: decryptedNumber,
+              expiry: decryptedExpiry,
+            },
+          }));
+        } else {
+          console.error("Desencriptación fallida, los datos no son válidos.");
+        }
       } catch (error) {
         console.error("Error al desencriptar los datos de la tarjeta de crédito", error);
       }
     }
     setEditMode(true);
   };
+  
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
 
   return (
     <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: "auto", mt: 4 }}>
-      <Typography variant="h4" gutterBottom>Perfil de Usuario</Typography>
+      <Typography variant="h4" gutterBottom>
+        Perfil de Usuario
+      </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -394,36 +389,19 @@ function Profile() {
             sx={{ mb: 2 }}
           />
           <TextField
-            select
-            label="País"
-            name="country"
-            value={formData.country}
-            onChange={handleInputChange}
-            fullWidth
-            sx={{ mb: 2 }}
-            disabled={!editMode}
-          >
-            {countries.map((country) => (
-              <MenuItem key={country} value={country}>
-                {country}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
             label="Membresía Actual"
             name="membershipType"
-            value={formData.membershipType}
+            value={formData.membershipType} // Muestra el tipo de membresía actual
             fullWidth
-            disabled
+            disabled // Desactivado para no permitir la edición
             sx={{ mb: 2 }}
           />
-          <Button variant="contained" color="primary" onClick={handleOpenMembershipDialog} sx={{ mb: 2 }}>
-            Subir de membresía
-          </Button>
         </Grid>
 
         <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>Información de Tarjeta de Crédito</Typography>
+          <Typography variant="h6" gutterBottom>
+            Información de Tarjeta de Crédito
+          </Typography>
           <TextField
             label="Número de Tarjeta"
             name="number"
@@ -478,6 +456,20 @@ function Profile() {
           )}
         </Grid>
       </Grid>
+
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Opciones de Upgrade de Membresía
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={handleOpenMembershipDialog}
+          disabled={editMode}
+        >
+          Actualizar Membresía
+        </Button>
+      </Box>
+
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
         {editMode ? (
           <>
@@ -492,6 +484,7 @@ function Profile() {
         )}
       </Box>
 
+      {/* Dialog para seleccionar plan de membresía */}
       <Dialog open={openMembershipDialog} onClose={handleCloseMembershipDialog} maxWidth="md" fullWidth>
         <DialogTitle>Actualizar Membresía</DialogTitle>
         <DialogContent>
@@ -537,21 +530,6 @@ function Profile() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showAchievement}
-        autoHideDuration={5000}
-        onClose={() => setShowAchievement(false)}
-      >
-        <Alert
-          icon={<EmojiEventsIcon fontSize="inherit" />}
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          ¡Felicidades! Has mejorado tu membresía
-        </Alert>
-      </Snackbar>
-      
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{"¿Eliminar permanentemente?"}</DialogTitle>
         <DialogContent>
@@ -574,8 +552,10 @@ function Profile() {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
     </Paper>
-  );
+);
+
 }
 
 export default Profile;
