@@ -39,28 +39,33 @@ export const signin = async (req, res, next) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
-        if (!user) return next(errorHandler(404, 'User not found'));
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
         const isPasswordCorrect = bcrypt.compareSync(password, user.password);
-        if (!isPasswordCorrect) return next(errorHandler(401, 'Invalid password'));
+        if (!isPasswordCorrect) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
 
-        // Generate a token that expires in 30 minutes
+        // Genera un token que expira en 30 minutos
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30m' });
 
-        // Exclude password from response
+        // Excluir la contraseña de la respuesta
         const { password: hashPassword, ...userWithoutPassword } = user._doc;
 
-        // Send token and user data in the response
+        // Enviar token y datos de usuario en la respuesta
         res.status(200).json({
             success: true,
             user: userWithoutPassword,
             token,
-            expiresIn: 30 * 60 * 1000 // 30 minutes in milliseconds
+            expiresIn: 30 * 60 * 1000 // 30 minutos en milisegundos
         });
     } catch (error) {
         next(error);
     }
 };
+
 
 // Delete user
 export const deleteUser = async (req, res, next) => {
