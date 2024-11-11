@@ -1,6 +1,6 @@
 import { UploadedFile } from '../models/file.model.js';
 import OutputDocument from '../models/ouput.model.js';
-import path from 'path'; // Import the path module
+import path from 'path'; 
 import {spawn} from 'child_process'
 import { PassThrough } from 'stream';
 import officegen from 'officegen';
@@ -12,7 +12,6 @@ import User from '../models/user.model.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Constants for membership types and limits
 const MEMBERSHIP_TYPES = {
   SMALL_BUSINESS: 'plan pequeña empresa',
   MEDIUM_BUSINESS: 'plan mediana empresa',
@@ -25,10 +24,8 @@ const FILE_LIMITS = {
   [MEMBERSHIP_TYPES.UNLIMITED]: Infinity
 };
 
-const RETENTION_PERIOD_DAYS = 90; // 3 months
+const RETENTION_PERIOD_DAYS = 90; //This is 3 months
 
-
-// Helper function to validate if the file is an Excel file
 const isExcelFile = (fileType) => {
   return fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
          fileType === 'application/vnd.ms-excel';
@@ -42,39 +39,32 @@ export const uploadFile = async (req, res) => {
 
     const { originalname, mimetype, buffer } = req.file;
 
-    // Fetch the user document from the database using the user ID
     const user = await User.findById(req.user._id);
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if the retention period has passed
     const currentDate = new Date();
     const lastUploadDate = user.lastUploadDate || new Date(0);
     const daysSinceLastUpload = (currentDate - lastUploadDate) / (1000 * 60 * 60 * 24);
 
     if (daysSinceLastUpload >= RETENTION_PERIOD_DAYS) {
-      // Reset upload count if retention period has passed
       user.uploadCount = 0;
     }
 
-    // Check if the user has reached their upload limit
     if (user.uploadCount >= FILE_LIMITS[user.membershipType]) {
       return res.status(403).json({ message: "File upload limit reached for your membership plan." });
     }
 
-    // Validate file type
     if (!isExcelFile(mimetype)) {
       return res.status(400).json({ message: 'Invalid file type. Only Excel files are allowed.' });
     }
 
-    // Increment upload count and set last upload date
     user.uploadCount += 1;
     user.lastUploadDate = currentDate;
     await user.save();
 
-    // Create a new file record in the database
     const newFile = new UploadedFile({
       fileName: originalname,
       fileType: mimetype,
@@ -100,19 +90,18 @@ const deleteOldFiles = async () => {
 };
 
 export const scheduleFileDeletion = () => {
-  // Run deleteOldFiles every day at midnight
+
   cron.schedule('0 0 * * *', async () => {
     console.log('Running scheduled task to delete old files');
     await deleteOldFiles();
   });
 };
 
-// Update file name
 export const updateFileName = async (req, res) => {
   const { fileId, newFileName } = req.body;
 
   try {
-    // Encuentra el archivo en la base de datos usando el ID
+
     const file = await UploadedFile.findById(fileId);
 
     if (!file) {
@@ -141,7 +130,7 @@ export const deleteFile = async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    await file.deleteOne(); // Use deleteOne() to remove the document
+    await file.deleteOne();
 
     return res.status(200).json({ message: 'File deleted successfully' });
   } catch (error) {
@@ -152,8 +141,7 @@ export const deleteFile = async (req, res) => {
 
 export const getAllFiles = async (req, res) => {
   try {
-    // Retrieve all files from the database
-    const files = await UploadedFile.find().populate('uploadedBy', 'username'); // Adjust based on your schema
+    const files = await UploadedFile.find().populate('uploadedBy', 'username');
     return res.status(200).json(files);
   } catch (error) {
     console.error('Error fetching files:', error);
@@ -163,10 +151,10 @@ export const getAllFiles = async (req, res) => {
 
 export const getFiles = async (req, res) => {
   try {
-    // Retrieve all files from the database
+
     const userId = req.user._id;
     console.log(userId);
-    const files = await UploadedFile.find({uploadedBy: userId}).populate('uploadedBy', 'username'); // Adjust based on your schema
+    const files = await UploadedFile.find({uploadedBy: userId}).populate('uploadedBy', 'username');
     return res.status(200).json(files);
   } catch (error) {
     console.error('Error fetching files:', error);
@@ -185,33 +173,27 @@ export const testFile = async (req, res) => {
 
     const fileBuffer = Buffer.from(file.fileData.buffer);
 
-    // Ruta a tu script de Python
     const pythonScriptPath = path.resolve(__dirname, '../model/dnn_model.py.py');
 
     console.log(`Ejecutando script de Python: ${pythonScriptPath}`);
 
-    // Iniciar el proceso de Python
     const pythonProcess = spawn('python', [pythonScriptPath], {
       env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
     });
 
-    // Enviar el archivo a Python a través de stdin
     pythonProcess.stdin.write(fileBuffer);
     pythonProcess.stdin.end();
 
     let pythonOutput = Buffer.from([]);
 
-    // Capturar la salida binaria del script de Python
     pythonProcess.stdout.on('data', (data) => {
       pythonOutput = Buffer.concat([pythonOutput, data]);
     });
 
-    // Capturar los errores del script de Python
     pythonProcess.stderr.on('data', (data) => {
       console.error(`Error de Python: ${data.toString()}`);
     });
 
-    // Manejar la finalización del proceso de Python
     pythonProcess.on('close', async (code) => {
       console.log(`Proceso de Python terminó con código ${code}`);
 
@@ -220,10 +202,9 @@ export const testFile = async (req, res) => {
       }
 
       try {
-        // Guardar el documento generado en MongoDB
         const outputDocument = new OutputDocument({
           fileName: `${file.fileName}_output.docx`,
-          fileData: pythonOutput,  // Aquí se guarda el archivo Word generado
+          fileData: pythonOutput,  
           fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           uploadedBy: req.user._id,
           originalFile: file._id
@@ -231,7 +212,6 @@ export const testFile = async (req, res) => {
 
         await outputDocument.save();
 
-        // Responder al cliente con el ID del documento
         return res.status(200).json({
           message: 'Archivo procesado correctamente',
           outputDocumentId: outputDocument._id
@@ -256,12 +236,10 @@ export const getOutputDocument = async (req, res) => {
       return res.status(404).json({ message: 'Documento de salida no encontrado' });
     }
 
-    // Establecer el tipo de contenido para la descarga del archivo
     const contentType = outputDocument.fileType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${outputDocument.fileName}"`);
 
-    // Comprobar si los datos del archivo existen y si son de tipo Buffer
     if (outputDocument.fileData && Buffer.isBuffer(outputDocument.fileData)) {
       res.send(outputDocument.fileData);
     } else {

@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-// Constants for membership types and limits
 const MEMBERSHIP_TYPES = {
     SMALL_BUSINESS: 'plan pequeña empresa',
     MEDIUM_BUSINESS: 'plan mediana empresa',
@@ -13,7 +12,7 @@ const FILE_LIMITS = {
     [MEMBERSHIP_TYPES.UNLIMITED]: Infinity
 };
 
-const RETENTION_PERIOD_DAYS = 90; // 3 months
+const RETENTION_PERIOD_DAYS = 90;
 
 const userSchema = new mongoose.Schema({
     username: {

@@ -101,12 +101,12 @@ function Profile() {
         setFormData({
           username: user.username || "",
           email: user.email || "",
-          country: user.country || countries[0], // Puedes definir un valor predeterminado
+          country: user.country || countries[0],
           membershipType: user.membershipType || "",
           creditCard: {
             number: user.creditCard?.number || "",
             expiry: user.creditCard?.expiry || "",
-            cvv: "", // No almacenar el CVV
+            cvv: "", 
           },
           newPassword: "",
           confirmPassword: "",
@@ -227,7 +227,7 @@ function Profile() {
       if (updateData.creditCard.number || updateData.creditCard.expiry) {
         updateData.creditCard.number = CryptoJS.AES.encrypt(updateData.creditCard.number, "secret_key").toString();
         updateData.creditCard.expiry = CryptoJS.AES.encrypt(updateData.creditCard.expiry, "secret_key").toString();
-        delete updateData.creditCard.cvv; // No almacenar el CVV
+        delete updateData.creditCard.cvv;
       }
       
 
@@ -391,9 +391,9 @@ function Profile() {
           <TextField
             label="Membresía Actual"
             name="membershipType"
-            value={formData.membershipType} // Muestra el tipo de membresía actual
+            value={formData.membershipType}
             fullWidth
-            disabled // Desactivado para no permitir la edición
+            disabled 
             sx={{ mb: 2 }}
           />
         </Grid>

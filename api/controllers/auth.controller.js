@@ -101,25 +101,19 @@ export const updateUser = async (req, res, next) => {
         if (country) user.country = country;
         if (membershipType) user.membershipType = membershipType;
 
-        // Handle credit card update
         if (creditCard) {
-            // Encriptar la información de la tarjeta
             const encryptedCardData = encryptCardData(creditCard);
             user.creditCard.number = encryptedCardData.number;
             user.creditCard.expiry = encryptedCardData.expiry;
-            // No almacenar el CVV de forma insegura, así que puedes omitirlo aquí.
         }
 
-        // Handle password update
         if (password) {
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
         }
 
-        // Save the updated user
         const updatedUser = await user.save();
 
-        // Remove password from response
         const userResponse = updatedUser.toObject();
         delete userResponse.password;
 
@@ -194,7 +188,7 @@ export const encryptCardData = (cardData) => {
     return {
       number: encryptedNumber,
       expiry: encryptedExpiry,
-      cvv: encryptedCvv, // No se recomienda almacenar el CVV, pero en caso de hacerlo, debe estar encriptado
+      cvv: encryptedCvv, 
     };
   };
   
@@ -212,17 +206,15 @@ export const encryptCardData = (cardData) => {
   };
 
   export const getUserProfile = async (req, res, next) => {
-    const { id } = req.params; // Obtenemos el id del usuario desde los parámetros
+    const { id } = req.params; 
 
     try {
-        const user = await User.findById(id); // Buscamos al usuario por su ID
+        const user = await User.findById(id); 
 
         if (!user) return next(createError(404, 'Usuario no encontrado'));
 
-        // Desencriptamos los datos de la tarjeta
         const decryptedCardData = decryptCardData(user.creditCard);
 
-        // Formateamos la respuesta sin enviar el CVV
         const userProfile = {
             _id: user._id,
             username: user.username,
@@ -233,7 +225,6 @@ export const encryptCardData = (cardData) => {
                 expiry: decryptedCardData.expiry,
             },
             country: user.country,
-            // Otros datos necesarios
         };
 
         res.status(200).json({

@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 
 export const authenticateUser = (req, res, next) => {
-  // Verifica si existe un token en la cabecera de autorización
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -18,8 +17,7 @@ export const authenticateUser = (req, res, next) => {
       return res.status(403).json({ message: 'Invalid token' });
     }
 
-    // Añadir más información del usuario al request, si es necesario
-    req.user = { _id: decoded.id, roles: decoded.roles || [] }; // Ejemplo: Incluyendo roles
+    req.user = { _id: decoded.id, roles: decoded.roles || [] }; 
     next();
   });
 };
@@ -31,7 +29,6 @@ export const checkUploadLimits = async (req, res, next) => {
   const daysSinceLastUpload = (currentDate - lastUploadDate) / (1000 * 60 * 60 * 24);
 
   if (daysSinceLastUpload >= RETENTION_PERIOD_DAYS) {
-    // Reset upload count if retention period has passed
     user.uploadCount = 0;
     user.lastUploadDate = null;
     await user.save();

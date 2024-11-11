@@ -4,11 +4,8 @@ import { uploadFile, updateFileName, deleteFile, getAllFiles, testFile, getFiles
 import { authenticateUser, checkUploadLimits } from '../middleware/authenticate.user.js';
 
 const router = express.Router();
-
-// Configure multer to use memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 
-// POST /api/files/upload Files
 router.post('/upload', authenticateUser, upload.single('file'), uploadFile);
 router.put('/update', authenticateUser, updateFileName);
 router.delete('/delete/:fileId', authenticateUser, deleteFile);

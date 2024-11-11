@@ -7,6 +7,6 @@ router.post("/signin", signin)
 router.delete('/delete/:id', deleteUser);
 router.put('/update/:id', updateUser);
 router.post("/refresh-token", refreshTokenHandler);
-router.post('/payment/:id', processPayment); // Ruta para procesar pagos
+router.post('/payment/:id', processPayment); 
 router.get('/profile/:id', getUserProfile);
 export default router;

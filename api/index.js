@@ -30,10 +30,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes); 
 
-// Serve static files from the React app
 app.use(express.static(path.join(_dirname, '/web/dist')));
 
-// The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 app.get('*', (req, res) => {
   res.sendFile(path.join(_dirname, 'web', 'dist', 'index.html'));
 });
